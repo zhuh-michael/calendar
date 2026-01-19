@@ -1,0 +1,10 @@
+/* Global styles for StarQuest frontend */
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap";
+
+:root{
+  --brand-gradient: linear-gradient(45deg, #ff6b35, #f7931e);
+  --text-color: #333;
+  --muted-color: #666;
+}
+
+

@@ -1,0 +1,17 @@
+{
+  "name": "starquest-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "app",
+    "kid",
+    "parent"
+  ],
+  "scripts": {
+    "dev": "cd ./app && npm install && VITE_API_BASE=http://localhost:8080 npm run dev -- --host 127.0.0.1 --port 5173",
+    "build": "cd ./app && npm run build",
+    "install:all": "cd ./app && npm install && cd ../kid && npm install && cd ../parent && npm install"
+  }
+}
+
+

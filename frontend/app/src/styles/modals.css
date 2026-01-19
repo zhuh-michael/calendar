@@ -1,0 +1,121 @@
+.van-dialog {
+  --van-dialog-padding: 22px;
+  --van-dialog-title-font-size: 20px;
+  --van-dialog-radius: 14px;
+  --van-dialog-background: rgba(255,255,255,0.98);
+  border-radius: var(--van-dialog-radius);
+  background: var(--van-dialog-background);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+  color: #333;
+}
+.van-dialog__content {
+  padding: 8px 22px 18px 22px;
+}
+.van-dialog__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.van-dialog__footer {
+  padding: 18px 20px 26px;
+  /* center footer content by text centering; child will be inline-flex */
+  text-align: center;
+  background: transparent;
+  box-sizing: border-box;
+}
+.van-dialog .van-button {
+  min-width: 90px;
+  border-radius: 8px;
+}
+.van-dialog .van-button--primary {
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  color: white;
+  box-shadow: 0 8px 20px rgba(255,107,53,0.18);
+}
+.van-dialog .van-button--plain {
+  background: rgba(0,0,0,0.04);
+}
+.van-dialog .van-field {
+  --van-field-margin-bottom: 12px;
+}
+.van-dialog .van-field__control {
+  background: transparent;
+  padding: 10px 0;
+}
+.van-field__label {
+  color: #333;
+  font-weight: 600;
+  width: 92px;
+}
+.particle-layer { pointer-events:none; }
+
+/* Task modal specific adjustments */
+.reward-row { display:flex; align-items:center; gap:12px; }
+.reward-field { flex:1; }
+.switch-wrapper { display:flex; align-items:center; gap:8px; padding-left:6px; }
+.switch-label { font-size:14px; color:#333; }
+
+/* Center footer for Element Plus dialogs as well */
+.el-dialog__footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 18px 18px;
+}
+
+/* force zero margins between modal buttons and center them visually */
+.van-dialog__footer > * {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+}
+.van-dialog__footer .van-button,
+.el-dialog__footer .el-button {
+  margin: 0 6px !important;
+}
+
+/* Force slot wrapper div inside footer to center its children */
+.van-dialog__footer > div,
+.el-dialog__footer > div {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Force footer centering regardless of slot content */
+.van-dialog__footer {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 18px 20px 28px !important;
+}
+.el-dialog__footer {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 18px 20px 28px !important;
+}
+
+/* Ensure inner custom footer wrappers don't push content left */
+.van-dialog__footer > * {
+  margin: 0 !important;
+  width: auto !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+}
+.el-dialog__footer > * {
+  margin: 0 !important;
+  width: auto !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+}
+
+.van-dialog__footer .van-button,
+.el-dialog__footer .el-button {
+  margin: 0 8px !important;
+}
+

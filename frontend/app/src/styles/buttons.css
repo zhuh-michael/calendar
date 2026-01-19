@@ -1,0 +1,54 @@
+.btn-common,
+.van-button,
+.el-button {
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-width: 88px;
+  font-weight: 600;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  transition: all .18s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  border: none;
+}
+
+.van-button--primary,
+.el-button--primary,
+.btn-primary {
+  background: linear-gradient(45deg, #ff6b35, #f7931e);
+  color: #fff;
+}
+
+.van-button--danger,
+.el-button--danger,
+.btn-danger {
+  background: linear-gradient(45deg,#e73b3b,#d32f2f);
+  color: #fff;
+}
+
+.van-button--ghost,
+.el-button--default,
+.btn-default {
+  background: #fff;
+  color: #333;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.btn-group > * + *,
+.van-button + .van-button,
+.el-button + .el-button,
+.btn-common + .btn-common {
+  margin-left: 12px;
+}
+
+.van-dialog .van-button,
+.el-dialog .el-button {
+  min-width: 84px;
+  padding: 8px 12px;
+}
+
+@media (max-width: 480px) {
+  .van-button, .el-button, .btn-common { padding: 8px 10px; min-width: 64px; }
+  .btn-group > * + * { margin-left: 8px; }
+}
+
+

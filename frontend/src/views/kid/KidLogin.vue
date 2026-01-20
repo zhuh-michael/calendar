@@ -167,7 +167,7 @@ const selectedKidId = ref(null)
 const password = ref('')
 const showPasswordInput = ref(false)
 const loading = ref(false)
-const defaultAvatar = '/src/assets/default-avatar.svg'
+const defaultAvatar = '/default-avatar.svg'
 
 const loadKids = async () => {
   try {

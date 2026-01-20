@@ -53,7 +53,7 @@ import { showToast } from 'vant'
 
 const rewards = ref([])
 const loading = ref(false)
-const defaultImage = '/src/assets/default-avatar.svg'
+const defaultImage = '/default-avatar.svg'
 const showDialog = ref(false)
 const form = ref({ id: null, name:'', description:'', cost:0, stock:0, imageUrl:'', type:'ITEM', active:true })
 const typeOptions = [

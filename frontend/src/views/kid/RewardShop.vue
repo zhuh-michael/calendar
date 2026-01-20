@@ -164,7 +164,7 @@ const loading = ref(false)
 const purchasing = ref(null)
 const showConfirmDialog = ref(false)
 const selectedReward = ref(null)
-const defaultAvatar = '/src/assets/default-avatar.svg'
+const defaultAvatar = '/default-avatar.svg'
 const defaultProductImage = 'https://via.placeholder.com/150x120?text=🎁'
 
 const rewardList = computed(() => rewardsList.value)

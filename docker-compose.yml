@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./database:/data/database
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_BASE=/api
+
+volumes:
+  db_data:
+
+
+

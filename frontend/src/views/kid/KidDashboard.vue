@@ -136,7 +136,7 @@ const pendingTasks = ref([])
 const completedTasks = ref([])
 const completingTasks = ref([])
 const showFireworks = ref(false)
-const defaultAvatar = '/src/assets/default-avatar.svg'
+const defaultAvatar = '/default-avatar.svg'
 
 // 计算今日获得星星总数
 const todayTotalStars = computed(() => {

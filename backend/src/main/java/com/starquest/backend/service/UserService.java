@@ -17,8 +17,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // @Transactional
+    // public User createUser(String username, String password, User.UserRole role) {
+    //     return createUser(username, password, role, null);
+    // }
+
     @Transactional
-    public User createUser(String username, String password, User.UserRole role) {
+    public User createUser(String username, String password, User.UserRole role, String nickname) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("用户名已存在");
         }
@@ -29,6 +34,9 @@ public class UserService {
         user.setPassword(com.starquest.backend.security.Sha256Util.sha256Hex(password));
         user.setRole(role);
         user.setStarBalance(0);
+        if (nickname != null) {
+            user.setNickname(nickname);
+        }
 
         return userRepository.save(user);
     }
@@ -59,9 +67,15 @@ public class UserService {
     }
 
     @Transactional
+    public void deleteUser(Long userId) {
+        User user = getUserById(userId);
+        userRepository.delete(user);
+    }
+
+    @Transactional
     public void initializeDefaultAdmin() {
         if (userRepository.findByUsername("admin").isEmpty()) {
-            createUser("admin", "password", User.UserRole.PARENT);
+            createUser("admin", "password", User.UserRole.PARENT, "管理员");
         }
     }
 }

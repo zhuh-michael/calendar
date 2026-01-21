@@ -6,7 +6,7 @@
     <ParentNav />
 
     <div class="controls">
-      <van-field v-model="selectedKidId" label="孩子" is-link placeholder="选择孩子" @click="showKidPicker = true" readonly />
+      <van-field v-model="selectedKidNickname" label="小朋友" is-link placeholder="选择小朋友" @click="showKidPicker = true" readonly />
       <van-field v-model="startDate" type="date" label="起始日期" placeholder="开始日期" />
       <van-field v-model="endDate" type="date" label="结束日期" placeholder="结束日期" />
     </div>
@@ -28,14 +28,14 @@
 
     <van-popup v-model:show="showKidPicker" position="bottom">
       <van-list>
-        <van-cell v-for="kid in kids" :key="kid.id" :title="kid.nickname || kid.username" @click="selectKid(kid)" />
+        <van-cell v-for="kid in kids" :key="kid.id" :title="`${kid.nickname}（${kid.username}）`" @click="selectKid(kid)" />
       </van-list>
     </van-popup>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { tasks, auth } from '@/utils/api.js'
 import { showToast } from 'vant'
 
@@ -46,6 +46,13 @@ const showKidPicker = ref(false)
 const selectedKidId = ref(null)
 const startDate = ref(new Date().toISOString().split('T')[0])
 const endDate = ref(new Date().toISOString().split('T')[0])
+
+// 计算属性：获取当前选中小朋友的昵称
+const selectedKidNickname = computed(() => {
+  if (!selectedKidId.value || !kids.value.length) return ''
+  const kid = kids.value.find(k => k.id === selectedKidId.value)
+  return kid ? (kid.nickname || kid.username) : ''
+})
 
 const loadTemplates = async () => {
   loading.value = true
@@ -73,7 +80,7 @@ const selectKid = (kid) => {
 }
 
 const importTemplate = async (templateId) => {
-  if (!selectedKidId.value) { showToast('请选择孩子'); return }
+  if (!selectedKidId.value) { showToast('请选择小朋友'); return }
   try {
     await tasks.fromTemplate(templateId, selectedKidId.value, startDate.value, endDate.value)
     showToast('导入成功')

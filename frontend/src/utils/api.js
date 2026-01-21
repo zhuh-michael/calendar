@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { showToast } from 'vant'
 
-const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) || 'http://localhost:8080'
+const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE)
 
 const client = axios.create({
   baseURL: API_BASE,
@@ -50,8 +50,8 @@ client.interceptors.response.use(
 
 export const auth = {
   login: (username, password) => client.post('/api/auth/login', { username, password }),
-  createKid: (username, password, nickname) => client.post('/api/auth/create-kid', null, { params: { username, password, nickname } }),
-  getKids: () => client.get('/api/auth/kids')
+  getKids: () => client.get('/api/auth/kids'),
+  getCurrentUser: () => client.get('/api/auth/me')
 }
 
 export const tasks = {
@@ -63,7 +63,20 @@ export const tasks = {
   delete: (taskId) => client.delete(`/api/tasks/${taskId}`),
   complete: (taskId, userId) => client.post(`/api/tasks/${taskId}/complete`, null, { params: { userId } }),
   approve: (taskId) => client.post(`/api/tasks/${taskId}/approve`),
-  reject: (taskId) => client.post(`/api/tasks/${taskId}/reject`),
+  reject: (taskId, rejectReason) => client.post(`/api/tasks/${taskId}/reject`, null, { params: { rejectReason } }),
+  uploadEvidence: (taskId, files) => {
+    const formData = new FormData()
+    if (Array.isArray(files)) {
+      files.forEach(f => formData.append('files', f))
+    } else if (files) {
+      formData.append('files', files)
+    }
+    return client.post(`/api/tasks/${taskId}/evidence`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  getEvidence: (taskId) => client.get(`/api/tasks/${taskId}/evidence`),
+  deleteEvidence: (evidenceId) => client.delete(`/api/tasks/evidence/${evidenceId}`),
   fromTemplate: (templateId, kidId, startDate, endDate) =>
     client.post('/api/tasks/from-template', null, { params: { templateId, kidId, startDate, endDate } })
 }
@@ -80,6 +93,9 @@ export const rewards = {
 // admin / parent APIs
 export const parents = {
   listKids: () => client.get('/api/parents/kids'),
+  createKid: (username, password, nickname) => client.post('/api/auth/create-kid', { username, password, nickname }),
+  updateKid: (kidId, data) => client.put(`/api/parents/kids/${kidId}`, data),
+  deleteKid: (kidId) => client.delete(`/api/parents/kids/${kidId}`),
   adjustKid: (kidId, amount, note) => client.post(`/api/parents/kids/${kidId}/adjust`, { amount, note })
 }
 

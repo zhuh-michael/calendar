@@ -5,11 +5,11 @@
       <div class="card">
         <h3>今日任务完成率</h3>
         <div class="metric">{{ completionRate }}%</div>
-        <div class="sub">今日任务完成率（按孩子平均）</div>
+        <div class="sub">今日任务完成率（按小朋友平均）</div>
       </div>
 
       <div class="card">
-        <h3>孩子星星余额</h3>
+        <h3>小朋友星星余额</h3>
         <ul class="kids-list">
           <li v-for="kid in kidsStats" :key="kid.id">
             <span class="kid-name">{{ kid.nickname || kid.username }}</span>

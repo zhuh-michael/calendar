@@ -41,6 +41,9 @@ public class Task {
 
     private String description;
 
+    @Column(name = "reject_reason")
+    private String rejectReason;
+
     public enum TaskStatus {
         TODO(0),    // 待办
         PENDING(1), // 审核中

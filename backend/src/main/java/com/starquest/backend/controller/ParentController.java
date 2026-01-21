@@ -42,9 +42,7 @@ public class ParentController {
 
     @PostMapping("/kids")
     public ResponseEntity<User> createKidAsParent(@RequestBody CreateKidRequest req) {
-        User kid = userService.createUser(req.getUsername(), req.getPassword(), User.UserRole.KID);
-        kid.setNickname(req.getNickname());
-        userService.saveUser(kid);
+        User kid = userService.createUser(req.getUsername(), req.getPassword(), User.UserRole.KID, req.getNickname());
         return ResponseEntity.ok(kid);
     }
 
@@ -58,6 +56,16 @@ public class ParentController {
         if (req.getStarBalance() != null) kid.setStarBalance(req.getStarBalance());
         userService.saveUser(kid);
         return ResponseEntity.ok(kid);
+    }
+
+    @DeleteMapping("/kids/{kidId}")
+    public ResponseEntity<Void> deleteKid(@PathVariable Long kidId) {
+        User kid = userService.getUserById(kidId);
+        if (!kid.getRole().equals(User.UserRole.KID)) {
+            throw new RuntimeException("只能删除孩子账号");
+        }
+        userService.deleteUser(kidId);
+        return ResponseEntity.ok().build();
     }
 
     @Data

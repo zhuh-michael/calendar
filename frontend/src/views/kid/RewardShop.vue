@@ -59,7 +59,7 @@
 
           <div class="product-info">
             <h4 class="product-name">{{ reward.name }}</h4>
-            <p class="product-description">{{ reward.description || '精彩奖励等你来兑换！' }}</p>
+            <p class="product-description">{{ reward.description || '精彩的系统奖励，等你来兑换！' }}</p>
 
             <div class="product-price">
               <van-icon name="star" color="#FFD700" size="16" />
@@ -130,7 +130,7 @@
         </div>
         <div class="warning-text">
           <van-icon name="info" color="#FF9800" />
-          <span>兑换成功后，请找爸爸妈妈领取奖励哦！</span>
+          <span>兑换成功后，系统会通过快递的方式发放奖励，请注意查收哦！</span>
         </div>
       </div>
     </van-dialog>
@@ -157,8 +157,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { showToast, Dialog } from 'vant'
 import { rewards } from '@/utils/api.js'
+import { useUserStore } from '@/stores/user.js'
 
-const userInfo = ref({})
+const userStore = useUserStore()
+const userInfo = computed(() => userStore.currentUser)
 const rewardsList = ref([])
 const loading = ref(false)
 const purchasing = ref(null)
@@ -170,15 +172,8 @@ const defaultProductImage = 'https://via.placeholder.com/150x120?text=🎁'
 const rewardList = computed(() => rewardsList.value)
 
 // 加载用户信息
-const loadUserInfo = () => {
-  try {
-    const storedUser = localStorage.getItem('kidUser')
-    if (storedUser) {
-      userInfo.value = JSON.parse(storedUser)
-    }
-  } catch (error) {
-    console.error('Failed to load user info:', error)
-  }
+const loadUserInfo = async () => {
+  await userStore.loadUserInfo(true) // 强制刷新以获取最新数据
 }
 
 // 加载商品列表
@@ -216,11 +211,10 @@ const confirmPurchase = async () => {
     await rewards.purchase(selectedReward.value.id, userInfo.value.userId)
 
     // 更新本地星星余额
-    userInfo.value.starBalance -= selectedReward.value.cost
-    localStorage.setItem('kidUser', JSON.stringify(userInfo.value))
+    userStore.deductStars(selectedReward.value.cost)
 
     showToast({
-      message: `🎉 兑换成功！请找爸爸妈妈领取 ${selectedReward.value.name}`,
+      message: `🎉 兑换成功！系统会通过快递的方式发放 ${selectedReward.value.name}，请注意查收哦！`,
       icon: 'success'
     })
 

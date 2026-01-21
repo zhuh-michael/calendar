@@ -1,5 +1,6 @@
 package com.starquest.backend.controller;
 
+import com.starquest.backend.dto.CreateKidRequest;
 import com.starquest.backend.dto.LoginRequest;
 import com.starquest.backend.dto.LoginResponse;
 import com.starquest.backend.model.User;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import com.starquest.backend.security.JwtUtil;
 import com.starquest.backend.security.Sha256Util;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -67,11 +70,8 @@ public class AuthController {
     }
 
     @PostMapping("/create-kid")
-    public ResponseEntity<User> createKid(@RequestParam String username,
-                                          @RequestParam String password,
-                                          @RequestParam String nickname) {
-        User kid = userService.createUser(username, password, User.UserRole.KID);
-        kid.setNickname(nickname);
+    public ResponseEntity<User> createKid(@RequestBody CreateKidRequest request) {
+        User kid = userService.createUser(request.getUsername(), request.getPassword(), User.UserRole.KID, request.getNickname());
         return ResponseEntity.ok(kid);
     }
 
@@ -79,5 +79,16 @@ public class AuthController {
     public ResponseEntity<java.util.List<User>> getKids() {
         java.util.List<User> kids = userService.getKids();
         return ResponseEntity.ok(kids);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Optional<User> optUser = userService.findByUsername(username);
+        if (optUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(optUser.get());
     }
 }

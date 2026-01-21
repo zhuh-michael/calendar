@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     is_template BOOLEAN DEFAULT FALSE,
     needs_review BOOLEAN DEFAULT FALSE,
     description TEXT,
+    reject_reason TEXT,
     FOREIGN KEY (kid_id) REFERENCES users(id)
 );
 
@@ -74,6 +75,15 @@ CREATE TABLE IF NOT EXISTS mood_logs (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     note TEXT,
     FOREIGN KEY (kid_id) REFERENCES users(id)
+);
+
+-- Task evidence table
+CREATE TABLE IF NOT EXISTS task_evidence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NOT NULL,
+    image_path VARCHAR(500) NOT NULL,
+    upload_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- Lucky draw records table

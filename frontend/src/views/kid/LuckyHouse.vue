@@ -150,9 +150,11 @@ import { showToast } from 'vant'
 import { lucky } from '@/utils/api.js'
 import { playGachaSound, initAudio } from '@/utils/audioManager.js'
 import { nextTick } from 'vue'
+import { useUserStore } from '@/stores/user.js'
 
 const router = useRouter()
-const userInfo = ref({})
+const userStore = useUserStore()
+const userInfo = computed(() => userStore.currentUser)
 const drawHistory = ref([])
 const isDrawing = ref(false)
 const showResult = ref(false)
@@ -168,23 +170,15 @@ const canDraw = computed(() => userInfo.value.starBalance >= drawCost)
 
 // 结果类型映射
 const resultTypes = {
-  'GRAND_PRIZE': { emoji: '🎊', title: '大吉（5%）', description: '获得大额星星包（示例：50 星）', stars: 50 },
-  'GOOD_PRIZE': { emoji: '🎉', title: '中吉（20%）', description: '获得免做卡或特别权益（无需星星）', stars: 0 },
-  'SMALL_PRIZE': { emoji: '⭐', title: '小吉（45%）', description: '获得少量星星回血（示例：10 星）', stars: 10 },
-  'PARTICIPATION': { emoji: '💝', title: '鼓励（30%）', description: '感谢参与，获得鼓励语或小礼物', stars: 0 },
-  'ENCOURAGEMENT': { emoji: '💝', title: '鼓励（30%）', description: '感谢参与，获得鼓励语或小礼物', stars: 0 }
+  'GRAND_PRIZE': { emoji: '🎊', title: '大吉（5%）', description: '恭喜获得100星星大礼包奖励！', stars: 100 },
+  'GOOD_PRIZE': { emoji: '🎉', title: '中吉（20%）', description: '恭喜获得免做卡奖励！', stars: 30 },
+  'SMALL_PRIZE': { emoji: '⭐', title: '小吉（45%）', description: '恭喜获得10星星回血奖励！', stars: 10 },
+  'ENCOURAGEMENT': { emoji: '💝', title: '鼓励（30%）', description: '谢谢参与！继续加油！', stars: 0 }
 }
 
 // 加载用户信息
-const loadUserInfo = () => {
-  try {
-    const storedUser = localStorage.getItem('kidUser')
-    if (storedUser) {
-      userInfo.value = JSON.parse(storedUser)
-    }
-  } catch (error) {
-    console.error('Failed to load user info:', error)
-  }
+const loadUserInfo = async () => {
+  await userStore.loadUserInfo(true) // 强制刷新以获取最新数据
 }
 
 // 加载抽奖历史
@@ -250,8 +244,7 @@ const performDraw = async () => {
 
   try {
     // 扣除星星
-    userInfo.value.starBalance -= drawCost
-    localStorage.setItem('kidUser', JSON.stringify(userInfo.value))
+    userStore.deductStars(drawCost)
 
     // 调用后端抽奖API
     const response = await lucky.draw(userInfo.value.userId)
@@ -261,8 +254,7 @@ const performDraw = async () => {
     setTimeout(() => {
       // 更新本地星星余额（若有额外奖励）
       if (result.starsEarned > 0) {
-        userInfo.value.starBalance += result.starsEarned
-        localStorage.setItem('kidUser', JSON.stringify(userInfo.value))
+        userStore.addStars(result.starsEarned)
       }
 
       drawResult.value = {
@@ -291,8 +283,7 @@ const performDraw = async () => {
     showToast('抽奖失败，请重试')
 
     // 退还星星
-    userInfo.value.starBalance += drawCost
-    localStorage.setItem('kidUser', JSON.stringify(userInfo.value))
+    userStore.addStars(drawCost)
 
     isDrawing.value = false
   }
@@ -357,9 +348,10 @@ const formatTime = (timestamp) => {
 const resultCardClass = computed(() => {
   if (!drawResult.value) return ''
   const stars = drawResult.value.stars
-  if (stars >= 50) return 'grand-prize'
+  if (stars >= 100) return 'grand-prize'
+  if (stars >= 30) return 'good-prize'
   if (stars >= 10) return 'small-prize'
-  return 'participation'
+  return 'encouragement'
 })
 
 onMounted(() => {
@@ -667,12 +659,17 @@ onMounted(() => {
   animation: grand-prize-glow 1s ease-in-out infinite alternate;
 }
 
+.result-card.good-prize {
+  border-color: #2196F3;
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+}
+
 .result-card.small-prize {
   border-color: #4CAF50;
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
 }
 
-.result-card.participation {
+.result-card.encouragement {
   border-color: #FF9800;
   background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05));
 }

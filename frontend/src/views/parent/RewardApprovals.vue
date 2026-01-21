@@ -9,7 +9,7 @@
         <div v-for="order in ordersList" :key="order.id" class="order-item">
           <div class="order-info">
             <div><strong>订单ID:</strong> {{ order.id }}</div>
-            <div><strong>孩子:</strong> {{ order.kidNickname }} (ID: {{ order.kidId }})</div>
+            <div><strong>小朋友:</strong> {{ order.kidNickname }} (ID: {{ order.kidId }})</div>
             <div><strong>奖励:</strong> {{ order.rewardName }} (ID: {{ order.rewardId }})</div>
             <div><strong>创建时间:</strong> {{ formatTime(order.createTime) }}</div>
           </div>

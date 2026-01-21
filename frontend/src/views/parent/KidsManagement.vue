@@ -9,6 +9,8 @@
         </div>
         <div class="kid-actions">
           <van-button size="small" type="primary" @click="openAdjustDialog(kid)">调整星星</van-button>
+          <van-button size="small" type="info" @click="openEditDialog(kid)">编辑</van-button>
+          <van-button size="small" type="danger" @click="deleteKid(kid)">删除</van-button>
           <van-button size="small" @click="exportTransactions(kid)">导出流水</van-button>
         </div>
       </div>
@@ -18,24 +20,41 @@
     </div>
     <ParentNav />
 
-    <van-dialog v-model:show="showAdjust" title="人工调整星星">
+    <van-dialog v-model:show="showAdjust" title="人工调整星星" :style="{ minWidth: '400px' }" close-on-click-overlay>
       <div class="adjust-form">
         <van-field v-model="adjustAmount" type="number" label="数量" placeholder="正数加星，负数减星" />
         <van-field v-model="adjustNote" label="备注" placeholder="请输入备注" />
       </div>
       <template #footer>
+        <div style="display: flex; justify-content: center; gap: 10px; padding-bottom: 16px;">
         <van-button plain @click="showAdjust=false">取消</van-button>
         <van-button type="primary" @click="submitAdjust">确认</van-button>
+        </div>
       </template>
     </van-dialog>
   
-  <van-dialog v-model:show="showCreate" title="创建小朋友账号">
+  <van-dialog v-model:show="showCreate" title="创建小朋友账号" :style="{ minWidth: '400px' }" close-on-click-overlay>
     <van-field v-model="newKid.username" label="用户名" placeholder="username" />
     <van-field v-model="newKid.password" label="密码" placeholder="password" />
     <van-field v-model="newKid.nickname" label="昵称" placeholder="nickname" />
     <template #footer>
+      <div style="display: flex; justify-content: center; gap: 10px; padding-bottom: 16px;">
       <van-button plain @click="showCreate=false">取消</van-button>
       <van-button type="primary" @click="submitCreateKid">创建</van-button>
+      </div>
+    </template>
+  </van-dialog>
+
+  <van-dialog v-model:show="showEdit" title="编辑小朋友账号" :style="{ minWidth: '400px' }" close-on-click-overlay>
+    <van-field v-model="editKid.username" label="用户名" readonly />
+    <van-field v-model="editKid.password" label="新密码" placeholder="留空则不修改" />
+    <van-field v-model="editKid.nickname" label="昵称" placeholder="nickname" />
+    <van-field v-model.number="editKid.starBalance" type="number" label="星星余额" placeholder="star balance" />
+    <template #footer>
+      <div style="display: flex; justify-content: center; gap: 10px; padding-bottom: 16px;">
+        <van-button plain @click="showEdit=false">取消</van-button>
+        <van-button type="primary" @click="submitEditKid">保存</van-button>
+      </div>
     </template>
   </van-dialog>
     </div>
@@ -48,7 +67,9 @@ import { showToast } from 'vant'
 
 const kids = ref([])
 const showAdjust = ref(false)
+const showEdit = ref(false)
 const currentKid = ref(null)
+const editKid = ref({ username: '', password: '', nickname: '', starBalance: 0 })
 const adjustAmount = ref(0)
 const adjustNote = ref('')
 
@@ -80,13 +101,57 @@ const openCreateKid = () => {
 
 const submitCreateKid = async () => {
   try {
-    await parents.createKid(newKid.value)
+    await parents.createKid(newKid.value.username, newKid.value.password, newKid.value.nickname)
     showToast('创建成功')
     showCreate.value = false
     loadKids()
   } catch (e) {
     console.error(e)
     showToast('创建失败')
+  }
+}
+
+// Edit kid account
+const openEditDialog = (kid) => {
+  editKid.value = {
+    username: kid.username,
+    password: '',
+    nickname: kid.nickname || '',
+    starBalance: kid.starBalance
+  }
+  currentKid.value = kid
+  showEdit.value = true
+}
+
+const submitEditKid = async () => {
+  try {
+    const updateData = {
+      nickname: editKid.value.nickname,
+      starBalance: editKid.value.starBalance
+    }
+    if (editKid.value.password && editKid.value.password.trim()) {
+      updateData.password = editKid.value.password
+    }
+
+    await parents.updateKid(currentKid.value.id, updateData)
+    showToast('修改成功')
+    showEdit.value = false
+    loadKids()
+  } catch (e) {
+    console.error(e)
+    showToast('修改失败')
+  }
+}
+
+// Delete kid account
+const deleteKid = async (kid) => {
+  try {
+    await parents.deleteKid(kid.id)
+    showToast('删除成功')
+    loadKids()
+  } catch (e) {
+    console.error(e)
+    showToast('删除失败')
   }
 }
 
@@ -135,6 +200,9 @@ onMounted(() => loadKids())
 .kid-name { font-weight:600; }
 .kid-balance { color:#FF9800; }
 .kid-actions {}
+
+/* Ensure van-field labels are vertically centered inside dialogs/forms in this view */
+ 
 </style>
 
 

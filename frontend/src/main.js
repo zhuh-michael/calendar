@@ -11,13 +11,19 @@ import 'animate.css'
 import '@/styles/index.css'
 import '@/styles/modals.css'
 import '@/styles/buttons.css'
+import { useUserStore } from '@/stores/user.js'
 
 const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 app.use(Vant)
 
+// 初始化用户store，从缓存加载用户信息
+const userStore = useUserStore()
+userStore.initializeFromCache()
+ 
 // register ElementPlus icons globally
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

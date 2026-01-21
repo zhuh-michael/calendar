@@ -5,6 +5,7 @@
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/service/TaskService.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/dto/PendingOrderDto.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/security/JwtAuthenticationFilter.java
+/Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/dto/CreateKidRequest.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/config/ApiExceptionHandler.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/security/JwtUtil.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/controller/RewardController.java
@@ -12,6 +13,7 @@
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/dto/ErrorResponse.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/config/DatabaseInitializer.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/model/Order.java
+/Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/model/TaskEvidence.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/service/RewardService.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/model/Transaction.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/repository/OrderRepository.java
@@ -23,6 +25,7 @@
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/repository/TaskRepository.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/controller/AuthController.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/controller/AnalyticsController.java
+/Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/repository/TaskEvidenceRepository.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/controller/LuckyDrawController.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/controller/TaskController.java
 /Users/zhuhao/projects/calendar/backend/src/main/java/com/starquest/backend/dto/LoginResponse.java

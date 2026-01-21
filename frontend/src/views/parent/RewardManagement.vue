@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <van-dialog v-model:show="showDialog" title="商品">
+    <van-dialog v-model:show="showDialog" title="商品" :style="{ minWidth: '400px' }" close-on-click-overlay>
       <van-field v-model="form.name" label="名称" placeholder="商品名称" />
       <van-field v-model="form.description" label="描述" placeholder="商品描述" />
       <van-field v-model.number="form.cost" type="number" label="价格(星)" placeholder="例如 20" />
@@ -39,8 +39,10 @@
         <van-checkbox v-model="form.active">上架</van-checkbox>
       </div>
       <template #footer>
-        <van-button plain @click="showDialog=false">取消</van-button>
-        <van-button type="primary" @click="submit">保存</van-button>
+        <div style="display: flex; justify-content: center; gap: 10px; padding-bottom: 16px;">
+          <van-button plain @click="showDialog=false">取消</van-button>
+          <van-button type="primary" @click="submit">保存</van-button>
+        </div>
       </template>
     </van-dialog>
   </div>

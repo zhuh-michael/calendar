@@ -1,8 +1,10 @@
 package com.starquest.backend.service;
 
 import com.starquest.backend.model.Task;
+import com.starquest.backend.model.TaskEvidence;
 import com.starquest.backend.model.Transaction;
 import com.starquest.backend.repository.TaskRepository;
+import com.starquest.backend.repository.TaskEvidenceRepository;
 import com.starquest.backend.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final TaskEvidenceRepository taskEvidenceRepository;
     private final TransactionRepository transactionRepository;
     private final UserService userService;
 
@@ -28,6 +31,11 @@ public class TaskService {
 
     public List<Task> getPendingTasksByKid(Long kidId) {
         return taskRepository.findByKidIdAndStatus(kidId, Task.TaskStatus.TODO);
+    }
+
+    public Task getTaskById(Long taskId) {
+        return taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("任务不存在"));
     }
 
     public List<Task> getTemplates() {
@@ -68,14 +76,23 @@ public class TaskService {
         if (!task.getKidId().equals(userId)) {
             throw new RuntimeException("无权操作此任务");
         }
-
-        if (task.getStatus() != Task.TaskStatus.TODO) {
-            throw new RuntimeException("任务状态不允许完成");
+        // If already approved/completed, don't allow submission
+        if (task.getStatus() == Task.TaskStatus.DONE) {
+            throw new RuntimeException("任务已经审核完成，提交失败");
         }
 
         if (task.getNeedsReview()) {
+            // allow submitting for review from TODO, or re-submitting while already PENDING
+            if (task.getStatus() == Task.TaskStatus.TODO || task.getStatus() == Task.TaskStatus.PENDING) {
             task.setStatus(Task.TaskStatus.PENDING);
+            } else {
+                throw new RuntimeException("任务状态不允许提交审核");
+            }
         } else {
+            // no review required: only allow completing when currently TODO
+            if (task.getStatus() != Task.TaskStatus.TODO) {
+                throw new RuntimeException("任务状态不允许完成");
+            }
             task.setStatus(Task.TaskStatus.DONE);
             // 发放奖励
             userService.updateStarBalance(userId, task.getRewardStars());
@@ -117,7 +134,7 @@ public class TaskService {
     }
 
     @Transactional
-    public void rejectTask(Long taskId) {
+    public void rejectTask(Long taskId, String rejectReason) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("任务不存在"));
 
@@ -126,6 +143,7 @@ public class TaskService {
         }
 
         task.setStatus(Task.TaskStatus.TODO);
+        task.setRejectReason(rejectReason);
         taskRepository.save(task);
     }
 
@@ -157,5 +175,27 @@ public class TaskService {
     public Long getCompletedTasksCount(Long kidId, LocalDate date) {
         LocalDateTime dateTime = date.atStartOfDay();
         return taskRepository.countByKidIdAndStatusAndDate(kidId, Task.TaskStatus.DONE, dateTime);
+    }
+
+    @Transactional
+    public TaskEvidence saveTaskEvidence(Long taskId, String imagePath) {
+        TaskEvidence evidence = new TaskEvidence();
+        evidence.setTaskId(taskId);
+        evidence.setImagePath(imagePath);
+        return taskEvidenceRepository.save(evidence);
+    }
+
+    public List<TaskEvidence> getTaskEvidence(Long taskId) {
+        return taskEvidenceRepository.findByTaskIdOrderByUploadTimeDesc(taskId);
+    }
+
+    @Transactional
+    public void deleteTaskEvidence(Long evidenceId) {
+        taskEvidenceRepository.deleteById(evidenceId);
+    }
+
+    @Transactional
+    public void deleteEvidenceByTaskId(Long taskId) {
+        taskEvidenceRepository.deleteByTaskId(taskId);
     }
 }

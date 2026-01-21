@@ -8,10 +8,6 @@ FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 COPY --from=build /workspace/target/*.jar app.jar
 
-# Create database directory and set permissions
-RUN mkdir -p /data/database && \
-    chmod 755 /data/database
-
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/app/app.jar"]
 

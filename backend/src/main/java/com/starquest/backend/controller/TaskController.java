@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -34,8 +33,47 @@ public class TaskController {
     }
 
     @GetMapping("/kid/{kidId}/pending")
-    public ResponseEntity<List<Task>> getPendingTasks(@PathVariable Long kidId) {
-        List<Task> tasks = taskService.getPendingTasksByKid(kidId);
+    public ResponseEntity<List<Task>> getPendingTasks(
+            @PathVariable Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Task> tasks = taskService.getPendingTasksByKid(kidId, page, size);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/pending-all")
+    public ResponseEntity<List<Task>> getAllPendingTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Task> tasks = taskService.getAllPendingTasks(page, size);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/kid/{kidId}/all")
+    public ResponseEntity<List<Task>> getTasksByKidAll(
+            @PathVariable Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Task> tasks = taskService.getTasksByKidAll(kidId, page, size);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Task>> getAllTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Task> tasks = taskService.getAllTasks(page, size);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/query")
+    public ResponseEntity<List<Task>> queryTasks(
+            @RequestParam(required = false) Long kidId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Task> tasks = taskService.queryTasks(kidId, status, date, page, size);
         return ResponseEntity.ok(tasks);
     }
 
@@ -104,8 +142,8 @@ public class TaskController {
             @PathVariable Long taskId,
             @RequestParam("files") MultipartFile[] files) {
         try {
-            // 验证任务存在且属于当前用户
-            Task task = taskService.getTaskById(taskId);
+            // 验证任务存在（并在后续可添加用户权限验证）
+            taskService.getTaskById(taskId);
             // TODO: 添加用户权限验证
 
             // 删除旧的结果数据库记录（覆盖式提交）
@@ -145,7 +183,5 @@ public class TaskController {
         return ResponseEntity.ok().build();
     }
 
-    private Task getTaskById(Long taskId) {
-        return taskService.getTaskById(taskId);
-    }
+    
 }

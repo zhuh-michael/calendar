@@ -41,6 +41,10 @@
             <div class="task-content">
               <div class="task-info">
                 <h4 class="task-title">{{ task.title }}</h4>
+                <div v-if="task.rejectReason" class="task-reject-reason">
+                  <van-icon name="warning" color="#ff4444" size="14" />
+                  <span class="reject-text">上次被拒绝：{{ task.rejectReason }}</span>
+                </div>
                 <div class="task-reward">
                   <van-icon name="star" color="#FFD700" size="16" />
                   <span>+{{ task.rewardStars }}</span>
@@ -147,8 +151,13 @@
           <p>{{ selectedTaskForEvidence?.description }}</p>
         </div>
 
+        <div v-if="selectedTaskForEvidence?.rejectReason" class="reject-reason">
+          <van-icon name="warning" color="#ff4444" />
+          <span>上次被拒绝：{{ selectedTaskForEvidence.rejectReason }}</span>
+        </div>
+
         <div class="evidence-section">
-          <div v-if="!evidencePreview" class="upload-options">
+          <div v-if="evidencePreviews.length === 0" class="upload-options">
             <van-button type="primary" icon="camera" @click="takePhoto">拍照</van-button>
             <van-button type="info" icon="photo" @click="chooseFromGallery">从相册选择</van-button>
           </div>
@@ -205,7 +214,14 @@
     </div>
 
     <!-- 查看结果对话框 -->
-    <van-dialog v-model:show="showViewEvidenceDialog" title="任务完成结果" width="70%" :style="{ minHeight: '400px', maxWidth: '800px' }" close-on-click-overlay>
+    <van-dialog 
+      v-model:show="showViewEvidenceDialog" 
+      :show-cancel-button="false" 
+      :show-confirm-button="false" 
+      title="任务完成结果" width="70%" 
+      :style="{ minHeight: '400px', maxWidth: '800px' }" 
+      close-on-click-overlay 
+    >
       <div class="evidence-view-dialog">
         <div class="task-info">
           <h3>{{ selectedTaskForEvidence?.title }}</h3>
@@ -223,19 +239,21 @@
           <p>暂无结果图片</p>
         </div>
 
-        <div v-else class="evidence-gallery">
-          <div
-            v-for="(evidence, index) in currentTaskEvidence"
-            :key="`evidence-${evidence.id || index}`"
-            class="evidence-item"
-          >
-            <img
-              :src="`${apiBaseUrl}/${evidence.imagePath}`"
-              class="evidence-image"
-              @click="previewImage(currentTaskEvidence.map(e => `${apiBaseUrl}/${e.imagePath}`), currentTaskEvidence.findIndex(e => (e.id || e.uploadTime) === (evidence.id || evidence.uploadTime)))"
-            />
-            <div class="evidence-meta">
-              <span class="upload-time">{{ formatTime(evidence.uploadTime) }}</span>
+        <div v-else class="preview-section">
+          <div class="preview-grid">
+            <div
+              v-for="(evidence, index) in currentTaskEvidence"
+              :key="`evidence-${evidence.id || index}`"
+              class="preview-item"
+            >
+              <img
+                :src="`${apiBaseUrl}/${evidence.imagePath}`"
+                class="evidence-preview"
+                @click="previewImage(currentTaskEvidence.map(e => `${apiBaseUrl}/${e.imagePath}`), currentTaskEvidence.findIndex(e => (e.id || e.uploadTime) === (evidence.id || evidence.uploadTime)))"
+              />
+              <div class="evidence-meta">
+                <span class="upload-time">{{ formatTime(evidence.uploadTime) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -245,6 +263,9 @@
           <van-button type="primary" @click="replaceEvidence">重新上传照片</van-button>
         </div>
       </div>
+
+      <template #footer>
+      </template>
     </van-dialog>
   </div>
 </template>
@@ -271,7 +292,8 @@ const showViewEvidenceDialog = ref(false)
 const selectedTaskForEvidence = ref(null)
 const currentTaskEvidence = ref([])
 const evidenceFiles = ref([]) // allow multiple files
-const evidencePreviews = ref([]) // corresponding data URLs
+const evidencePreviews = ref([]) // corresponding data URLs or object URLs
+const evidenceObjectUrls = ref([]) // to track and revoke object URLs
 const uploadingEvidence = ref(false)
 
 // 从store获取用户信息
@@ -360,25 +382,52 @@ const hideFireworks = () => {
 
 // 结果上传相关函数
 const handleFileSelect = (fileList) => {
-  const filesArray = Array.from(fileList || [])
+  const maxFiles = 5
+  let filesArray = Array.from(fileList || [])
+  if (filesArray.length > maxFiles) {
+    showToast(`最多上传 ${maxFiles} 张图片`)
+    filesArray = filesArray.slice(0, maxFiles)
+  }
+  // Replace selection with chosen files
   evidenceFiles.value = filesArray
+  // cleanup old object URLs
+  evidenceObjectUrls.value.forEach(url => {
+    try { URL.revokeObjectURL(url) } catch(e){ }
+  })
+  evidenceObjectUrls.value = []
   evidencePreviews.value = []
   filesArray.forEach(file => {
+    // create object URL immediately for quick preview
+    try {
+      const objUrl = URL.createObjectURL(file)
+      evidenceObjectUrls.value.push(objUrl)
+      evidencePreviews.value.push(objUrl)
+    } catch (e) {
+      // ignore
+    }
+    // also read as DataURL to support platforms where object URL may not persist
     const reader = new FileReader()
     reader.onload = (e) => {
-      evidencePreviews.value.push(e.target.result)
+      // replace corresponding preview (by index) with data URL when ready
+      const idx = evidencePreviews.value.findIndex(u => u && typeof u === 'string' && u.startsWith('blob:'))
+      if (idx >= 0) {
+        evidencePreviews.value[idx] = e.target.result
+      } else {
+        evidencePreviews.value.push(e.target.result)
+      }
     }
     reader.readAsDataURL(file)
   })
 }
 
 const takePhoto = () => {
-  // use file input with capture; allow single or multiple (camera may be single)
+  // use file input with capture; allow multiple (camera may be single)
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
   input.capture = 'camera'
-  input.multiple = true
+  // camera usually provides a single file; do not set multiple to avoid platform issues
+  input.multiple = false
   input.onchange = (e) => {
     if (e.target.files.length > 0) {
       handleFileSelect(e.target.files)
@@ -482,8 +531,13 @@ const isPendingStatus = (status) => {
 const replaceEvidence = () => {
   showViewEvidenceDialog.value = false
   showEvidenceDialog.value = true
-  evidenceFile.value = null
-  evidencePreview.value = ''
+  evidenceFiles.value = []
+  evidencePreviews.value = []
+  // revoke object URLs
+  evidenceObjectUrls.value.forEach(url => {
+    try { URL.revokeObjectURL(url) } catch(e) {}
+  })
+  evidenceObjectUrls.value = []
 }
 
 // 格式化时间
@@ -872,6 +926,8 @@ onMounted(() => {
 /* 结果上传对话框样式 */
 .evidence-dialog {
   padding: 20px 0;
+  max-height: 70vh;
+  overflow: auto;
 }
 
 .upload-options {
@@ -920,6 +976,18 @@ onMounted(() => {
 .upload-options .van-button {
   min-width: 120px;
   padding: 8px 12px;
+}
+
+.task-reject-reason {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: #ff4444;
+  font-size: 13px;
+}
+.task-reject-reason .reject-text {
+  color: #ff4444;
 }
 
 @media (max-width: 480px) {

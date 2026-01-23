@@ -56,7 +56,11 @@ export const auth = {
 
 export const tasks = {
   getByKidAndDate: (kidId, date) => client.get(`/api/tasks/kid/${kidId}`, { params: { date } }),
-  getPending: (kidId) => client.get(`/api/tasks/kid/${kidId}/pending`),
+  getPending: (kidId, page = 0, size = 20) => client.get(`/api/tasks/kid/${kidId}/pending`, { params: { page, size } }),
+  getAllPending: (page = 0, size = 20) => client.get('/api/tasks/pending-all', { params: { page, size } }),
+  getByKidAll: (kidId, page = 0, size = 20) => client.get(`/api/tasks/kid/${kidId}/all`, { params: { page, size } }),
+  getAll: (page = 0, size = 20) => client.get('/api/tasks/all', { params: { page, size } }),
+  query: (params) => client.get('/api/tasks/query', { params }),
   templates: () => client.get('/api/tasks/templates'),
   create: (task) => client.post('/api/tasks', task),
   update: (taskId, task) => client.put(`/api/tasks/${taskId}`, task),

@@ -9,7 +9,7 @@ echo "🚀 Building StarQuest Production Environment (Backend + Frontend)..."
 
 # Build the production images
 echo "📦 Building Docker images..."
-DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build --no-cache
+DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build
 
 # Tag the images
 REGISTRY="crpi-ymugfdq7imhhoek8.cn-shanghai.personal.cr.aliyuncs.com/myspace_zhuh"

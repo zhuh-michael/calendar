@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +32,52 @@ public class TaskService {
     }
 
     public List<Task> getPendingTasksByKid(Long kidId) {
-        return taskRepository.findByKidIdAndStatus(kidId, Task.TaskStatus.TODO);
+        return taskRepository.findByKidIdAndStatus(kidId, Task.TaskStatus.PENDING);
+    }
+
+    public List<Task> getPendingTasksByKid(Long kidId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskRepository.findByKidIdAndStatus(kidId, Task.TaskStatus.PENDING, pageable);
+    }
+
+    public List<Task> getAllPendingTasks() {
+        return taskRepository.findByStatus(Task.TaskStatus.PENDING);
+    }
+
+    public List<Task> getAllPendingTasks(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskRepository.findByStatus(Task.TaskStatus.PENDING, pageable);
+    }
+
+    public List<Task> getTasksByKidAll(Long kidId) {
+        return taskRepository.findByKidId(kidId);
+    }
+
+    public List<Task> getTasksByKidAll(Long kidId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskRepository.findByKidId(kidId, pageable);
+    }
+
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
+    }
+
+    public List<Task> getAllTasks(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskRepository.findAll(pageable).getContent();
+    }
+
+    public List<Task> queryTasks(Long kidId, String status, LocalDate date, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Task.TaskStatus taskStatus = null;
+        if (status != null) {
+            try {
+                taskStatus = Task.TaskStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                // 如果status不是有效的枚举值，忽略这个条件
+            }
+        }
+        return taskRepository.findTasksByConditions(kidId, taskStatus, date, pageable);
     }
 
     public Task getTaskById(Long taskId) {

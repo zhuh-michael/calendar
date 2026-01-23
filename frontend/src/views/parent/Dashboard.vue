@@ -2,23 +2,21 @@
   <div class="parent-dashboard">
     <ParentNav />
     <div class="cards">
-      <div class="card">
+      <div class="card clickable" @click="goToTasks">
         <h3>今日任务完成率</h3>
         <div class="metric">{{ completionRate }}%</div>
         <div class="sub">今日任务完成率（按小朋友平均）</div>
       </div>
 
-      <div class="card">
+      <div class="card clickable" @click="goToKids">
         <h3>小朋友星星余额</h3>
-        <ul class="kids-list">
-          <li v-for="kid in kidsStats" :key="kid.id">
-            <span class="kid-name">{{ kid.nickname || kid.username }}</span>
-            <span class="kid-stars"><van-icon name="star" color="#FFD700" /> {{ kid.starBalance }}</span>
-          </li>
-        </ul>
+        <div class="metric">
+          <van-icon name="star" color="#FFD700" /> 共 {{ kidsStats.length }} 位小朋友
+        </div>
+        <div class="sub">点击查看小朋友详情</div>
       </div>
 
-      <div class="card">
+      <div class="card clickable" @click="goToApprovals">
         <h3>待审核任务</h3>
         <div class="metric">{{ pendingApprovals }}</div>
         <div class="sub">需要家长审批的任务数量</div>
@@ -34,12 +32,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { analytics } from '@/utils/api.js'
-import { tasks } from '@/utils/api.js'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { analytics, tasks, parents } from '@/utils/api.js'
 import { showToast } from 'vant'
 import ParentNav from '@/components/ParentNav.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const completionRate = ref(0)
 const kidsStats = ref([])
@@ -47,21 +44,55 @@ const pendingApprovals = ref(0)
 
 const loadDashboard = async () => {
   try {
-    // kids stats (includes star balances)
-    const kidsResp = await analytics.kidsStats()
-    kidsStats.value = kidsResp.data || []
+    // Try to get kids stats from analytics endpoint first
+    const kidsResp = await analytics.kidsStats().catch(() => ({ data: [] }))
+    let kids = kidsResp.data || []
 
-    // today's completion rate for first kid as example (aggregate can be improved)
-    if (kidsStats.value.length > 0) {
-      const kidId = kidsStats.value[0].id
-      const rateResp = await analytics.completionRate(kidId)
-      completionRate.value = Math.round((rateResp.data?.percentage || 0) * 100) / 100
+    // If analytics.kidsStats is not implemented (empty), fall back to parents.listKids()
+    if (!kids || kids.length === 0) {
+      const resp = await parents.listKids()
+      // parents.listKids expected to return kids with id, username, nickname, starBalance
+      kids = (resp.data || []).map(k => ({
+        id: k.id,
+        kidName: k.nickname || k.username,
+        starBalance: k.starBalance || 0
+      }))
     }
 
-    // pending approvals count (backend tasks endpoint)
-    const pendingResp = await tasks.getPending(0).catch(() => ({ data: [] }))
-    // backend may support query by parent; fallback to 0 length
-    pendingApprovals.value = (pendingResp.data && pendingResp.data.length) || 0
+    // Populate kidsStats for display
+    kidsStats.value = kids.map(k => ({
+      id: k.id || k.kidId || k.kidId,
+      nickname: k.kidName || k.nickname || k.kidName,
+      starBalance: k.starBalance || k.starBalance === 0 ? k.starBalance : (k.starBalance || 0)
+    }))
+
+    // Compute aggregate completion rate as average of per-kid completion rates
+    if (kidsStats.value.length > 0) {
+      const rates = await Promise.all(kidsStats.value.map(async (kid) => {
+        try {
+          const r = await analytics.completionRate(kid.id)
+          // backend returns object with completionRate or percentage
+          return r.data?.completionRate || r.data?.percentage || 0
+        } catch (er) {
+          return 0
+        }
+      }))
+      const avg = rates.reduce((s, v) => s + Number(v || 0), 0) / rates.length
+      completionRate.value = Math.round((avg || 0) * 100) / 100
+    } else {
+      completionRate.value = 0
+    }
+
+    // Count pending approvals across all kids
+    const pendingCounts = await Promise.all(kidsStats.value.map(async (kid) => {
+      try {
+        const r = await tasks.getPending(kid.id)
+        return (r.data || []).length
+      } catch (er) {
+        return 0
+      }
+    }))
+    pendingApprovals.value = pendingCounts.reduce((s, n) => s + n, 0)
   } catch (e) {
     console.error('Failed to load parent dashboard:', e)
     showToast('加载仪表盘数据失败')
@@ -71,6 +102,32 @@ const loadDashboard = async () => {
 onMounted(() => {
   loadDashboard()
 })
+// Also refresh when route changes or window regains focus to keep data up-to-date
+const router = useRouter()
+const route = useRoute()
+
+const onVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    loadDashboard()
+  }
+}
+const onWindowFocus = () => loadDashboard()
+
+window.addEventListener('visibilitychange', onVisibilityChange)
+window.addEventListener('focus', onWindowFocus)
+
+watch(() => route.fullPath, () => {
+  loadDashboard()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('focus', onWindowFocus)
+})
+
+const goToTasks = () => router.push('/parent/tasks')
+const goToKids = () => router.push('/parent/kids')
+const goToApprovals = () => router.push('/parent/tasks')
 </script>
 
 <style scoped>
@@ -83,6 +140,8 @@ onMounted(() => {
 .kid-name { margin-right:8px; font-weight:600; }
 .kid-stars { color:#FF9800; }
 .quick-actions { display:flex; gap:12px; margin-top:10px; }
+.clickable { cursor: pointer; }
+.clickable:hover { transform: translateY(-3px); box-shadow:0 8px 22px rgba(0,0,0,0.12); }
 </style>
 
 

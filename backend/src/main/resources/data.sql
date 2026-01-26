@@ -65,3 +65,4 @@ INSERT OR IGNORE INTO orders (kid_id, reward_id, status, create_time)
 VALUES
 (2, 1, 0, '2024-01-15 16:00:00'),  -- 待兑换乐高积木
 (3, 2, 1, '2024-01-14 18:00:00');  -- 已兑换看电视券
+

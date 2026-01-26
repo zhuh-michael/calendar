@@ -2,7 +2,7 @@
 export const config = {
   // API基础URL
   get apiBaseUrl() {
-    return import.meta.env.VITE_API_BASE || 'http://localhost:8081'
+    return import.meta.env.VITE_API_BASE || 'http://localhost:8080'
   },
 
   // 其他配置可以在这里添加

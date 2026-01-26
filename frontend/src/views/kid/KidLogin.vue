@@ -121,36 +121,6 @@
         </van-button>
       </div>
     </div>
-
-    <!-- 心情打卡弹窗 -->
-    <van-dialog
-      v-model:show="showMoodDialog"
-      :show-cancel-button="false"
-      :show-confirm-button="false"
-      :close-on-click-overlay="false"
-      class="mood-dialog"
-    >
-      <div class="mood-content">
-        <div class="mood-header">
-          <h2 class="mood-title">🌟 今天心情怎么样？</h2>
-          <p class="mood-subtitle">选择你的心情，让我们一起记录美好的一天</p>
-        </div>
-
-        <div class="mood-options">
-          <div
-            v-for="mood in moodOptions"
-            :key="mood.type"
-            class="mood-option animate__animated animate__zoomIn"
-            :class="{ selected: selectedMood === mood.type }"
-            @click="selectMood(mood)"
-          >
-            <div class="mood-emoji">{{ mood.emoji }}</div>
-            <div class="mood-text">{{ mood.text }}</div>
-            <div class="mood-glow" v-if="selectedMood === mood.type"></div>
-          </div>
-        </div>
-      </div>
-    </van-dialog>
   </div>
 </template>
 
@@ -158,7 +128,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { auth, mood } from '@/utils/api.js'
+import { auth } from '@/utils/api.js'
 
 const router = useRouter()
 const availableKids = ref([])
@@ -213,52 +183,12 @@ const handleLogin = async () => {
     localStorage.setItem('kidUser', JSON.stringify(user))
     showToast({ message: `欢迎回来，${user.nickname}！`, icon: 'success' })
 
-    // Show mood check-in dialog only if there's no mood log today
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      const start = `${today}T00:00:00`
-      const end = `${today}T23:59:59`
-      const resp = await mood.historyRange(user.userId, start, end)
-      const history = resp.data || []
-      if (history.length === 0) {
-        showMoodDialog.value = true
-      } else {
-        // already checked in today, go straight to dashboard
-        router.push('/kid/dashboard')
-      }
-    } catch (e) {
-      // if any error, default to showing dialog so user can still check in
-      console.error('Failed to check mood history:', e)
-      showMoodDialog.value = true
-    }
+    // 登录成功后跳转到首页，打卡弹窗会在 App.vue 中全局处理
+    router.push('/kid/dashboard')
   } catch (error) {
     showToast({ message: error.response?.data || '密码错误，请重试', icon: 'fail' })
   } finally {
     loading.value = false
-  }
-}
-
-// Mood check-in functionality
-const showMoodDialog = ref(false)
-const selectedMood = ref('')
-const moodOptions = [
-  { emoji: '😄', text: '开心', type: 'HAPPY' },
-  { emoji: '😐', text: '一般', type: 'NEUTRAL' },
-  { emoji: '😡', text: '生气', type: 'ANGRY' },
-  { emoji: '😭', text: '难过', type: 'SAD' }
-]
-
-const selectMood = async (mood) => {
-  selectedMood.value = mood.type
-  try {
-    await mood.log(selectedKid.value.id, mood.type, '')
-    showMoodDialog.value = false
-    router.push('/kid/dashboard')
-  } catch (error) {
-    console.error('Failed to log mood:', error)
-    // Even if mood logging fails, proceed to dashboard
-    showMoodDialog.value = false
-    router.push('/kid/dashboard')
   }
 }
 
@@ -579,98 +509,6 @@ onMounted(() => {
   color: #666;
 }
 
-/* 心情打卡弹窗样式 */
-.mood-dialog {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(30px);
-  border-radius: 30px;
-  border: 3px solid #FFD700;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.mood-content {
-  padding: 30px 20px;
-  text-align: center;
-}
-
-.mood-header {
-  margin-bottom: 30px;
-}
-
-.mood-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 10px;
-  background: linear-gradient(45deg, #FF6B35, #F7931E, #FFD700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.mood-subtitle {
-  font-size: 16px;
-  color: #666;
-}
-
-.mood-options {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.mood-option {
-  background: linear-gradient(135deg, #FFF 0%, #F8F9FA 100%);
-  border-radius: 20px;
-  padding: 25px 15px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border: 2px solid transparent;
-  position: relative;
-  overflow: hidden;
-}
-
-.mood-option:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-}
-
-.mood-option.selected {
-  border-color: #FF6B35;
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.1));
-  transform: scale(1.05);
-}
-
-.mood-emoji {
-  font-size: 48px;
-  margin-bottom: 10px;
-}
-
-.mood-text {
-  font-size: 16px;
-  font-weight: bold;
-  color: #333;
-}
-
-.mood-glow {
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  right: -5px;
-  bottom: -5px;
-  border-radius: 20px;
-  background: linear-gradient(45deg, #FF6B35, #F7931E);
-  opacity: 0.3;
-  animation: mood-glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes mood-glow {
-  from { opacity: 0.3; transform: scale(1); }
-  to { opacity: 0.6; transform: scale(1.02); }
-}
-
 @media (max-width: 480px) {
   .login-container {
     padding: 30px 20px;
@@ -686,26 +524,6 @@ onMounted(() => {
     padding: 15px 10px;
   }
 
-  .mood-content {
-    padding: 20px 15px;
-  }
-
-  .mood-title {
-    font-size: 24px;
-  }
-
-  .mood-options {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-
-  .mood-option {
-    padding: 20px 10px;
-  }
-
-  .mood-emoji {
-    font-size: 40px;
-  }
 }
 
 </style>

@@ -1,6 +1,7 @@
 package com.starquest.backend.repository;
 
 import com.starquest.backend.model.Task;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -44,4 +45,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
                                     @Param("status") Task.TaskStatus status,
                                     @Param("date") LocalDate date,
                                     Pageable pageable);
+
+    @Query("SELECT t FROM Task t WHERE " +
+           "(:kidId IS NULL OR t.kidId = :kidId) AND " +
+           "(:status IS NULL OR t.status = :status) AND " +
+           "(:date IS NULL OR DATE(t.startTime) = :date)")
+    Page<Task> findTasksByConditionsPage(@Param("kidId") Long kidId,
+                                         @Param("status") Task.TaskStatus status,
+                                         @Param("date") LocalDate date,
+                                         Pageable pageable);
 }

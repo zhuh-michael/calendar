@@ -32,6 +32,22 @@ public class User {
 
     private String nickname;
 
+    // RPG 核心字段
+    @Column(nullable = false)
+    private Integer exp = 0;
+
+    @Column(nullable = false)
+    private Integer level = 1;
+
+    @Column(name = "level_title")
+    private String levelTitle = "星际见习生";
+
+    @Column(name = "streak_days", nullable = false)
+    private Integer streakDays = 0;
+
+    @Column(name = "last_checkin_date")
+    private java.time.LocalDate lastCheckinDate;
+
     public enum UserRole {
         PARENT, KID
     }

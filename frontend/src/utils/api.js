@@ -51,7 +51,9 @@ client.interceptors.response.use(
 export const auth = {
   login: (username, password) => client.post('/api/auth/login', { username, password }),
   getKids: () => client.get('/api/auth/kids'),
-  getCurrentUser: () => client.get('/api/auth/me')
+  getCurrentUser: () => client.get('/api/auth/me'),
+  checkIn: () => client.post('/api/auth/checkin'),
+  getRpgInfo: () => client.get('/api/auth/rpg-info')
 }
 
 export const tasks = {
@@ -88,8 +90,13 @@ export const tasks = {
 export const rewards = {
   list: () => client.get('/api/rewards'),
   getByType: (type) => client.get(`/api/rewards/type/${type}`),
-  create: (data) => client.post('/api/rewards', data),
-  update: (id, data) => client.put(`/api/rewards/${id}`, data),
+  getById: (id) => client.get(`/api/rewards/${id}`),
+  create: (formData) => client.post('/api/rewards', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  update: (id, formData) => client.put(`/api/rewards/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
   delete: (id) => client.delete(`/api/rewards/${id}`),
   purchase: (rewardId, kidId) => client.post(`/api/rewards/${rewardId}/purchase`, null, { params: { kidId } })
 }

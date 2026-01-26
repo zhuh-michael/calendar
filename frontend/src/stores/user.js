@@ -12,6 +12,13 @@ export const useUserStore = defineStore('user', () => {
   const isKid = computed(() => currentUser.value?.role === 'KID')
   const isParent = computed(() => currentUser.value?.role === 'PARENT')
 
+  // RPG 相关计算属性
+  const userLevel = computed(() => currentUser.value?.level || 1)
+  const userExp = computed(() => currentUser.value?.exp || 0)
+  const userTitle = computed(() => currentUser.value?.levelTitle || '星际见习生')
+  const userStreak = computed(() => currentUser.value?.streakDays || 0)
+  const userAvatarFrame = computed(() => currentUser.value?.avatarFrame || 'bronze')
+
   // 加载用户信息
   const loadUserInfo = async (forceRefresh = false) => {
     // 如果不是强制刷新且已有用户信息，直接返回
@@ -30,7 +37,13 @@ export const useUserStore = defineStore('user', () => {
         nickname: response.data.nickname,
         starBalance: response.data.starBalance,
         avatar: response.data.avatar,
-        role: response.data.role
+        role: response.data.role,
+        // RPG 字段
+        exp: response.data.exp || 0,
+        level: response.data.level || 1,
+        levelTitle: response.data.levelTitle || '星际见习生',
+        streakDays: response.data.streakDays || 0,
+        avatarFrame: response.data.avatarFrame || 'bronze'
       }
 
       currentUser.value = userData
@@ -84,6 +97,18 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // 更新 RPG 信息
+  const updateRpgInfo = (rpgData) => {
+    if (currentUser.value) {
+      currentUser.value.exp = rpgData.exp
+      currentUser.value.level = rpgData.level
+      currentUser.value.levelTitle = rpgData.levelTitle
+      currentUser.value.streakDays = rpgData.streakDays
+      currentUser.value.avatarFrame = rpgData.avatarFrame
+      localStorage.setItem('kidUser', JSON.stringify(currentUser.value))
+    }
+  }
+
   // 清除用户信息（登出时使用）
   const clearUserInfo = () => {
     currentUser.value = null
@@ -112,12 +137,18 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn,
     isKid,
     isParent,
+    userLevel,
+    userExp,
+    userTitle,
+    userStreak,
+    userAvatarFrame,
 
     // 方法
     loadUserInfo,
     updateStarBalance,
     addStars,
     deductStars,
+    updateRpgInfo,
     clearUserInfo,
     initializeFromCache
   }

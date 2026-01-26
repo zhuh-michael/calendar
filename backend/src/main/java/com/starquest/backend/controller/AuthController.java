@@ -4,6 +4,7 @@ import com.starquest.backend.dto.CreateKidRequest;
 import com.starquest.backend.dto.LoginRequest;
 import com.starquest.backend.dto.LoginResponse;
 import com.starquest.backend.model.User;
+import com.starquest.backend.service.RpgService;
 import com.starquest.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class AuthController {
 
     private final UserService userService;
+    private final RpgService rpgService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -63,8 +65,14 @@ public class AuthController {
                 user.getNickname(),
                 user.getStarBalance()
         );
-        String token = jwtUtil.generateToken(user.getUsername());
-        response.setToken(token);
+        response.setToken(jwtUtil.generateToken(user.getUsername()));
+
+        // 设置 RPG 字段
+        response.setExp(user.getExp());
+        response.setLevel(user.getLevel());
+        response.setLevelTitle(user.getLevelTitle());
+        response.setStreakDays(user.getStreakDays());
+        response.setAvatarFrame(rpgService.getAvatarFrame(user.getLevel()));
 
         return ResponseEntity.ok(response);
     }
@@ -90,5 +98,62 @@ public class AuthController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(optUser.get());
+    }
+
+    /**
+     * 每日打卡
+     * POST /api/auth/checkin
+     */
+    @PostMapping("/checkin")
+    public ResponseEntity<?> checkIn() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Optional<User> optUser = userService.findByUsername(username);
+
+        if (optUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = optUser.get();
+        RpgService.CheckInResult result = rpgService.checkIn(user.getId());
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 获取用户 RPG 信息（等级进度）
+     * GET /api/auth/rpg-info
+     */
+    @GetMapping("/rpg-info")
+    public ResponseEntity<?> getRpgInfo() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Optional<User> optUser = userService.findByUsername(username);
+
+        if (optUser.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User user = optUser.get();
+
+        // 计算等级进度
+        int currentLevelExp = rpgService.getLevelBaseExp(user.getLevel());
+        int nextLevelExp = rpgService.getNextLevelBaseExp(user.getLevel());
+        int progressExp = user.getExp() - currentLevelExp;
+        int requiredExp = nextLevelExp - currentLevelExp;
+        int progressPercent = requiredExp > 0 ? (int) Math.round((double) progressExp / requiredExp * 100) : 100;
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("exp", user.getExp());
+        response.put("level", user.getLevel());
+        response.put("levelTitle", user.getLevelTitle());
+        response.put("streakDays", user.getStreakDays());
+        response.put("lastCheckinDate", user.getLastCheckinDate() != null ? user.getLastCheckinDate().toString() : null);
+        response.put("avatarFrame", rpgService.getAvatarFrame(user.getLevel()));
+        response.put("currentLevelExp", currentLevelExp);
+        response.put("nextLevelExp", nextLevelExp);
+        response.put("progressPercent", progressPercent);
+
+        return ResponseEntity.ok(response);
     }
 }

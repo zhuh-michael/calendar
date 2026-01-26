@@ -33,6 +33,9 @@ public class Task {
     @Column(name = "reward_stars", nullable = false)
     private Integer rewardStars;
 
+    @Column(name = "reward_xp")
+    private Integer rewardXp;
+
     @Column(name = "is_template", nullable = false)
     private Boolean isTemplate = false;
 

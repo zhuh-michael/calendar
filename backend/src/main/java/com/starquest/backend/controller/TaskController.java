@@ -1,10 +1,12 @@
 package com.starquest.backend.controller;
 
+import com.starquest.backend.dto.TaskPageResponse;
 import com.starquest.backend.model.Task;
 import com.starquest.backend.model.TaskEvidence;
 import com.starquest.backend.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,14 +69,20 @@ public class TaskController {
     }
 
     @GetMapping("/query")
-    public ResponseEntity<List<Task>> queryTasks(
+    public ResponseEntity<TaskPageResponse> queryTasks(
             @RequestParam(required = false) Long kidId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        List<Task> tasks = taskService.queryTasks(kidId, status, date, page, size);
-        return ResponseEntity.ok(tasks);
+        Page<Task> taskPage = taskService.queryTasks(kidId, status, date, page, size);
+        TaskPageResponse response = new TaskPageResponse(
+                taskPage.getContent(),
+                taskPage.getTotalElements(),
+                taskPage.getNumber(),
+                taskPage.getSize()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/templates")

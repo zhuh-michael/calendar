@@ -30,6 +30,11 @@ public class RewardService {
         return rewardRepository.findByTypeAndActiveTrue(type);
     }
 
+    public Reward getRewardById(Long rewardId) {
+        return rewardRepository.findById(rewardId)
+                .orElseThrow(() -> new RuntimeException("商品不存在"));
+    }
+
     @Transactional
     public Reward createReward(Reward reward) {
         return rewardRepository.save(reward);

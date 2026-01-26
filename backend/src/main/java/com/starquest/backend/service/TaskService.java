@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -24,6 +25,7 @@ public class TaskService {
     private final TaskEvidenceRepository taskEvidenceRepository;
     private final TransactionRepository transactionRepository;
     private final UserService userService;
+    private final RpgService rpgService;
 
     public List<Task> getTasksByKidAndDate(Long kidId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
@@ -67,7 +69,7 @@ public class TaskService {
         return taskRepository.findAll(pageable).getContent();
     }
 
-    public List<Task> queryTasks(Long kidId, String status, LocalDate date, int page, int size) {
+    public Page<Task> queryTasks(Long kidId, String status, LocalDate date, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Task.TaskStatus taskStatus = null;
         if (status != null) {
@@ -77,7 +79,7 @@ public class TaskService {
                 // 如果status不是有效的枚举值，忽略这个条件
             }
         }
-        return taskRepository.findTasksByConditions(kidId, taskStatus, date, pageable);
+        return taskRepository.findTasksByConditionsPage(kidId, taskStatus, date, pageable);
     }
 
     public Task getTaskById(Long taskId) {
@@ -102,6 +104,7 @@ public class TaskService {
         task.setTitle(taskDetails.getTitle());
         task.setStartTime(taskDetails.getStartTime());
         task.setRewardStars(taskDetails.getRewardStars());
+        task.setRewardXp(taskDetails.getRewardXp());
         task.setNeedsReview(taskDetails.getNeedsReview());
         task.setDescription(taskDetails.getDescription());
         task.setKidId(taskDetails.getKidId());
@@ -141,16 +144,20 @@ public class TaskService {
                 throw new RuntimeException("任务状态不允许完成");
             }
             task.setStatus(Task.TaskStatus.DONE);
-            // 发放奖励
+            // 发放星星奖励
             userService.updateStarBalance(userId, task.getRewardStars());
 
-            // 记录交易
+            // 记录星星交易
             Transaction transaction = new Transaction();
             transaction.setUserId(userId);
             transaction.setAmount(task.getRewardStars());
             transaction.setReason("完成任务: " + task.getTitle());
             transaction.setRelatedTaskId(taskId);
             transactionRepository.save(transaction);
+
+            // 发放 XP 奖励（使用任务设置的 rewardXp，如果未设置则默认等于星星数）
+            int xpReward = task.getRewardXp() != null ? task.getRewardXp() : task.getRewardStars();
+            rpgService.awardTaskXp(userId, xpReward);
         }
 
         taskRepository.save(task);
@@ -168,16 +175,20 @@ public class TaskService {
         task.setStatus(Task.TaskStatus.DONE);
         taskRepository.save(task);
 
-        // 发放奖励
+        // 发放星星奖励
         userService.updateStarBalance(task.getKidId(), task.getRewardStars());
 
-        // 记录交易
+        // 记录星星交易
         Transaction transaction = new Transaction();
         transaction.setUserId(task.getKidId());
         transaction.setAmount(task.getRewardStars());
         transaction.setReason("任务审核通过: " + task.getTitle());
         transaction.setRelatedTaskId(taskId);
         transactionRepository.save(transaction);
+
+        // 发放 XP 奖励（使用任务设置的 rewardXp，如果未设置则默认等于星星数）
+        int xpReward = task.getRewardXp() != null ? task.getRewardXp() : task.getRewardStars();
+        rpgService.awardTaskXp(task.getKidId(), xpReward);
     }
 
     @Transactional
@@ -210,6 +221,7 @@ public class TaskService {
             newTask.setKidId(kidId);
             newTask.setStartTime(currentDate.atTime(template.getStartTime().toLocalTime()));
             newTask.setRewardStars(template.getRewardStars());
+            newTask.setRewardXp(template.getRewardXp());
             newTask.setNeedsReview(template.getNeedsReview());
             newTask.setDescription(template.getDescription());
             newTask.setIsTemplate(false);

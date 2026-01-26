@@ -9,31 +9,28 @@
       <van-button type="success" @click="openCreate">新建任务</van-button>
     </div>
 
-    <div class="list-container">
-      <van-list
-        v-model:loading="loading"
-        :finished="finished"
-        finished-text="没有更多了"
-        @load="onLoad"
-      >
-      <div v-if="tasksList.length === 0 && !loading && tasksLoaded" class="empty">没有任务</div>
-      <div v-else class="task-list">
-        <div v-for="task in tasksList" :key="task.id" class="task-item">
-          <div class="main">
-            <div class="title">{{ task.title }}</div>
-            <div class="meta">时间: {{ formatTime(task.startTime) }} · 星星: {{ task.rewardStars }} · 审核: {{ (task.status === 'PENDING' || task.status === 1 || task.status === '1') ? '是' : '否' }}</div>
-            <div class="desc">{{ task.description }}</div>
-          </div>
-          <div class="actions">
-            <van-button size="small" @click="openEdit(task)">编辑</van-button>
-            <van-button size="small" type="danger" @click="deleteTask(task.id)">删除</van-button>
-            <van-button size="small" @click="viewEvidence(task)">查看照片</van-button>
-            <van-button v-if="task.status === 'PENDING' || task.status === 1 || task.status === '1'" size="small" type="primary" @click="approve(task.id)">通过</van-button>
-            <van-button v-if="task.status === 'PENDING' || task.status === 1 || task.status === '1'" size="small" type="warning" @click="openRejectDialog(task)">拒绝</van-button>
+    <div class="list-container" ref="listContainerRef">
+      <div class="scroll-wrapper" @scroll="onScroll">
+        <div v-if="tasksList.length === 0 && !loading && tasksLoaded" class="empty">没有任务</div>
+        <div v-else class="task-list">
+          <div v-for="task in tasksList" :key="task.id" class="task-item">
+            <div class="main">
+              <div class="title">{{ task.title }}</div>
+              <div class="meta">时间: {{ formatTime(task.startTime) }} · 星星: {{ task.rewardStars }} · XP: {{ task.rewardXp || task.rewardStars }} · 审核: {{ (task.status === 'PENDING' || task.status === 1 || task.status === '1') ? '是' : '否' }}</div>
+              <div class="desc">{{ task.description }}</div>
+            </div>
+            <div class="actions">
+              <van-button size="small" @click="openEdit(task)">编辑</van-button>
+              <van-button size="small" type="danger" @click="deleteTask(task.id)">删除</van-button>
+              <van-button size="small" @click="viewEvidence(task)">查看照片</van-button>
+              <van-button v-if="task.status === 'PENDING' || task.status === 1 || task.status === '1'" size="small" type="primary" @click="approve(task.id)">通过</van-button>
+              <van-button v-if="task.status === 'PENDING' || task.status === 1 || task.status === '1'" size="small" type="warning" @click="openRejectDialog(task)">拒绝</van-button>
+            </div>
           </div>
         </div>
+        <div v-if="loading" class="loading-tip">加载中...</div>
+        <div v-if="finished && tasksList.length > 0" class="finished-tip">没有更多了</div>
       </div>
-    </van-list>
     </div>
 
     <!-- kid picker -->
@@ -53,14 +50,17 @@
     <van-dialog v-model:show="showDialog" title="任务" :style="{ minWidth: '400px' }" close-on-click-overlay>
       <van-field v-model="form.title" label="标题" placeholder="任务标题" />
       <van-field v-model="form.startTime" label="时间" placeholder="YYYY-MM-DDTHH:mm" />
-      <div class="field-row reward-row">
-        <van-field class="reward-field" v-model.number="form.rewardStars" type="number" label="星星" placeholder="奖励星星" />
+      <div class="reward-row">
+        <van-field v-model.number="form.rewardStars" type="number" label="星星" placeholder="奖励星星" />
+        <van-field v-model.number="form.rewardXp" type="number" label="经验值" placeholder="奖励经验值" />
+      </div>
+      <van-field v-model="form.description" label="描述" placeholder="任务描述" />
+      <div class="review-row">
         <div class="switch-wrapper">
           <van-switch v-model="form.needsReview" active-color="#ff6b35" />
           <div class="switch-label">需要审核</div>
         </div>
       </div>
-      <van-field v-model="form.description" label="描述" placeholder="任务描述" />
       <template #footer>
         <div style="display: flex; justify-content: center; gap: 10px; padding-bottom: 16px;">
         <van-button plain @click="showDialog=false">取消</van-button>
@@ -170,14 +170,15 @@ const tasksList = ref([])
 const tasksCount = ref(0)
 const tasksLoaded = ref(false)
 const loading = ref(false)
-const finished = ref(false)
-const currentPage = ref(0)
+，const finished = ref(false)
+const currentPage = ref(1)  // 页码从 1 开始
 const pageSize = ref(20)
 const showKidPicker = ref(false)
 const showDialog = ref(false)
 const showEvidenceDialog = ref(false)
 const showRejectDialog = ref(false)
 const showStatusPicker = ref(false)
+const listContainerRef = ref(null)
 
 const statusOptions = [
   { value: 'TODO', label: '待办' },
@@ -195,6 +196,7 @@ const form = ref({
   title: '',
   startTime: '',
   rewardStars: 0,
+  rewardXp: 0,
   needsReview: true,
   description: '',
   kidId: null
@@ -219,14 +221,18 @@ const loadKids = async () => {
 
 const loadTasks = async (reset = true) => {
   if (reset) {
-    currentPage.value = 0
+    currentPage.value = 1
     finished.value = false
     tasksList.value = []
     tasksLoaded.value = false
   }
 
+  // 检查是否还有更多数据
+  if (!reset && finished.value) return
+
   try {
-    const page = currentPage.value
+    // 后端是 0-based 页码，传入 page - 1
+    const page = currentPage.value - 1
     const size = pageSize.value
 
     // 使用统一的查询API，传递所有筛选条件
@@ -253,16 +259,18 @@ const loadTasks = async (reset = true) => {
 
     // 普通分页查询
     const resp = await tasks.query(params)
-    const data = resp.data || []
-    tasksList.value = reset ? data : [...tasksList.value, ...data]
+    const pageData = resp.data || {}
+    const data = pageData.tasks || []
+    const total = pageData.total || 0
 
-    tasksCount.value = tasksList.value.length
+    tasksList.value = reset ? data : [...tasksList.value, ...data]
+    tasksCount.value = total
     tasksLoaded.value = true
 
-    // Check if we have more data
-    if (data.length < size) {
-      finished.value = true
-    }
+    // 根据总数判断是否还有更多数据（1-based 页码）
+    // 已加载数量 = (当前页码 - 1) * 每页大小
+    const loaded = (currentPage.value - 1) * size
+    finished.value = loaded >= total
   } catch (e) {
     console.error(e)
     showToast('加载任务失败')
@@ -270,12 +278,31 @@ const loadTasks = async (reset = true) => {
     if (tasksList.value.length > 0) {
       finished.value = true // Stop loading on error
     }
+  } finally {
+    // 重置加载状态，允许再次触发加载
+    loading.value = false
   }
 }
 
 const onLoad = async () => {
+  // 加载前检查是否还有更多数据
+  if (finished.value) return
+
   currentPage.value++
   await loadTasks(false)
+}
+
+// 滚动到底部检测
+const onScroll = (e) => {
+  const { scrollTop, scrollHeight, clientHeight } = e.target
+  // 距离底部 50px 时触发加载
+  if (scrollHeight - scrollTop - clientHeight < 50) {
+    // 只有未完成且未在加载时才触发
+    if (!finished.value && !loading.value) {
+      loading.value = true
+      onLoad()
+    }
+  }
 }
 
 const selectKid = (kid) => {
@@ -308,7 +335,7 @@ const selectStatus = (opt) => {
 
 const openCreate = () => {
   const defaultTime = selectedDate.value ? selectedDate.value + 'T08:00' : new Date().toISOString().split('T')[0] + 'T08:00'
-  form.value = { id: null, title:'', startTime: defaultTime, rewardStars: 0, needsReview: true, description:'', kidId: selectedKidId.value }
+  form.value = { id: null, title:'', startTime: defaultTime, rewardStars: 0, rewardXp: 0, needsReview: true, description:'', kidId: selectedKidId.value }
   showDialog.value = true
 }
 
@@ -430,15 +457,55 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.task-management { padding:20px; }
-.list-container { height: 60vh; overflow: auto; }
-.controls { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+.task-management {
+  padding: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.list-container {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+.scroll-wrapper {
+  height: 100%;
+  overflow: auto;
+}
 .task-list { display:flex; flex-direction:column; gap:10px; }
-.task-item { display:flex; justify-content:space-between; background:rgba(255,255,255,0.95); padding:12px; border-radius:8px; }
+.task-item { display:flex; justify-content:space-between; background:rgba(255,255,255,0.95); padding:12px; border-radius:8px; min-height: 80px; }
 .title { font-weight:600; }
 .meta { color:#777; font-size:12px; margin-top:6px; }
 .desc { color:#555; margin-top:8px; }
-.empty { text-align:center; color:#999; padding:36px 0; font-size:16px; }
+.empty { text-align:center; color:#999; padding:36px 0; font-size:16px; min-height: 100px; }
+.loading-tip, .finished-tip { text-align:center; color:#999; padding:16px; font-size:14px; }
+
+/* 奖励行样式 */
+.reward-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.review-row {
+  padding: 8px 16px;
+}
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.switch-label {
+  font-size: 14px;
+  color: #333;
+}
 
 /* 结果预览样式 */
 .evidence-view-dialog {

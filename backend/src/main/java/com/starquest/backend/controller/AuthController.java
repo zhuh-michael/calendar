@@ -1,6 +1,6 @@
 package com.starquest.backend.controller;
 
-import com.starquest.backend.dto.CreateKidRequest;
+// import com.starquest.backend.dto.CreateKidRequest; // not used with multipart handler
 import com.starquest.backend.dto.LoginRequest;
 import com.starquest.backend.dto.LoginResponse;
 import com.starquest.backend.model.User;
@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import com.starquest.backend.security.JwtUtil;
+import com.starquest.backend.service.FileStorageService;
+import org.springframework.http.MediaType;
 import com.starquest.backend.security.Sha256Util;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,7 @@ public class AuthController {
     private final RpgService rpgService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final FileStorageService fileStorageService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
@@ -77,11 +80,26 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/create-kid")
-    public ResponseEntity<User> createKid(@RequestBody CreateKidRequest request) {
-        User kid = userService.createUser(request.getUsername(), request.getPassword(), User.UserRole.KID, request.getNickname());
+    @PostMapping(value = "/create-kid", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<User> createKid(
+            @RequestParam("username") String username,
+            @RequestParam("password") String password,
+            @RequestParam(value = "nickname", required = false) String nickname,
+            @RequestParam(value = "avatar", required = false) org.springframework.web.multipart.MultipartFile avatar,
+            @RequestParam(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile
+    ) {
+        User kid = userService.createUser(username, password, User.UserRole.KID, nickname);
+        org.springframework.web.multipart.MultipartFile fileToSave = (avatar != null && !avatar.isEmpty()) ? avatar : imageFile;
+        if (fileToSave != null && !fileToSave.isEmpty()) {
+            String avatarUrl = fileStorageService.saveImage(fileToSave);
+            kid.setAvatar(avatarUrl);
+            userService.saveUser(kid);
+        }
         return ResponseEntity.ok(kid);
     }
+
+    // 保留兼容的 JSON 创建接口（原有方式）
+    // Removed legacy JSON create-kid endpoint. Use multipart POST /api/auth/create-kid instead.
 
     @GetMapping("/kids")
     public ResponseEntity<java.util.List<User>> getKids() {

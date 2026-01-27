@@ -170,7 +170,7 @@ const tasksList = ref([])
 const tasksCount = ref(0)
 const tasksLoaded = ref(false)
 const loading = ref(false)
-，const finished = ref(false)
+const finished = ref(false)
 const currentPage = ref(1)  // 页码从 1 开始
 const pageSize = ref(20)
 const showKidPicker = ref(false)
@@ -184,7 +184,7 @@ const statusOptions = [
   { value: 'TODO', label: '待办' },
   { value: 'PENDING', label: '待审核' },
   { value: 'DONE', label: '已完成' }
-]
+];
 // default to PENDING
 const selectedStatus = ref('PENDING')
 const selectedStatusLabel = ref('待审核')

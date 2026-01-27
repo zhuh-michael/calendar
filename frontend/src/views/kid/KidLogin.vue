@@ -36,7 +36,7 @@
           >
           <div class="avatar-wrapper">
             <van-image
-              :src="kid.avatar || defaultAvatar"
+              :src="`${apiBaseUrl}/${kid.avatar}`"
               round
               width="80"
               height="80"
@@ -60,7 +60,7 @@
       <div class="password-section" v-if="selectedKid && !showPasswordInput">
         <div class="selected-avatar">
           <van-image
-            :src="selectedKid.avatar || defaultAvatar"
+            :src="`${apiBaseUrl}/${selectedKid.avatar}`"
             round
             width="100"
             height="100"
@@ -82,7 +82,7 @@
       <div class="password-form" v-if="showPasswordInput">
         <div class="password-avatar">
           <van-image
-            :src="selectedKid.avatar || defaultAvatar"
+            :src="`${apiBaseUrl}/${selectedKid.avatar}`"
             round
             width="80"
             height="80"
@@ -129,7 +129,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { auth } from '@/utils/api.js'
-
+import { getApiBaseUrl } from '@/utils/config.js'
+// API基础URL
+const apiBaseUrl = getApiBaseUrl()
 const router = useRouter()
 const availableKids = ref([])
 const selectedKid = ref(null)
@@ -138,6 +140,8 @@ const password = ref('')
 const showPasswordInput = ref(false)
 const loading = ref(false)
 const defaultAvatar = '/default-avatar.svg'
+
+
 
 const loadKids = async () => {
   try {
@@ -154,6 +158,7 @@ const loadKids = async () => {
     console.error('加载儿童用户失败:', error)
   }
 }
+
 
 const selectKid = (kid) => {
   selectedKidId.value = kid.id
@@ -183,6 +188,14 @@ const handleLogin = async () => {
     localStorage.setItem('kidUser', JSON.stringify(user))
     showToast({ message: `欢迎回来，${user.nickname}！`, icon: 'success' })
 
+    // 主动触发一次全局打卡检查（供 App.vue 监听），避免页面刷新才弹窗的问题
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('triggerCheckIn'))
+      } catch (e) {
+        // ignore
+      }
+    }
     // 登录成功后跳转到首页，打卡弹窗会在 App.vue 中全局处理
     router.push('/kid/dashboard')
   } catch (error) {

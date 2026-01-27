@@ -117,6 +117,15 @@ public class RewardController {
     }
 
     /**
+     * 获取待处理订单（管理员视图） - 为兼容前端请求 /api/rewards/pending-orders
+     */
+    @GetMapping("/pending-orders")
+    public ResponseEntity<java.util.List<com.starquest.backend.dto.PendingOrderDto>> getPendingOrdersDetailed() {
+        java.util.List<com.starquest.backend.dto.PendingOrderDto> list = rewardService.getPendingOrdersDetailed();
+        return ResponseEntity.ok(list);
+    }
+
+    /**
      * 私有方法：处理图片上传
      */
     private String uploadImage(MultipartFile file) {

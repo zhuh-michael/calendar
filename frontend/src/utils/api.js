@@ -104,8 +104,8 @@ export const rewards = {
 // admin / parent APIs
 export const parents = {
   listKids: () => client.get('/api/parents/kids'),
-  createKid: (username, password, nickname) => client.post('/api/auth/create-kid', { username, password, nickname }),
-  updateKid: (kidId, data) => client.put(`/api/parents/kids/${kidId}`, data),
+  createKid: (formData) => client.post('/api/auth/create-kid', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateKid: (kidId, formData) => client.put(`/api/parents/kids/${kidId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   deleteKid: (kidId) => client.delete(`/api/parents/kids/${kidId}`),
   adjustKid: (kidId, amount, note) => client.post(`/api/parents/kids/${kidId}/adjust`, { amount, note })
 }

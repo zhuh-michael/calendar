@@ -4,7 +4,7 @@
     <div class="header">
       <div class="user-info">
         <van-image
-          :src="userInfo.avatar || defaultAvatar"
+          :src="`${apiBaseUrl}/${userInfo.avatar}`"
           round
           width="50"
           height="50"
@@ -151,7 +151,9 @@ import { lucky } from '@/utils/api.js'
 import { playGachaSound, initAudio } from '@/utils/audioManager.js'
 import { nextTick } from 'vue'
 import { useUserStore } from '@/stores/user.js'
-
+import { getApiBaseUrl } from '@/utils/config.js'
+// API基础URL
+const apiBaseUrl = getApiBaseUrl()
 const router = useRouter()
 const userStore = useUserStore()
 const userInfo = computed(() => userStore.currentUser)

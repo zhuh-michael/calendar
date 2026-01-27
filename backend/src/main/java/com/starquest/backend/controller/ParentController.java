@@ -6,6 +6,8 @@ import com.starquest.backend.repository.TransactionRepository;
 import com.starquest.backend.service.UserService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import com.starquest.backend.service.FileStorageService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,7 @@ public class ParentController {
 
     private final UserService userService;
     private final TransactionRepository transactionRepository;
+    private final FileStorageService fileStorageService;
 
     @GetMapping("/kids")
     public ResponseEntity<java.util.List<User>> listKids() {
@@ -40,20 +43,36 @@ public class ParentController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/kids")
-    public ResponseEntity<User> createKidAsParent(@RequestBody CreateKidRequest req) {
-        User kid = userService.createUser(req.getUsername(), req.getPassword(), User.UserRole.KID, req.getNickname());
-        return ResponseEntity.ok(kid);
-    }
+    // Legacy JSON create/update endpoints removed. Use multipart endpoints:
+    // POST /api/auth/create-kid (multipart) for creation
+    // PUT  /api/parents/kids/{kidId} (multipart) for update
 
-    @PutMapping("/kids/{kidId}")
-    public ResponseEntity<User> updateKid(@PathVariable Long kidId, @RequestBody UpdateKidRequest req) {
+    // 支持 multipart 更新（包含 avatar 文件）
+    @PutMapping(value = "/kids/{kidId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<User> updateKidMultipart(
+            @PathVariable Long kidId,
+            @RequestParam(value = "nickname", required = false) String nickname,
+            @RequestParam(value = "password", required = false) String password,
+            @RequestParam(value = "starBalance", required = false) Integer starBalance,
+            @RequestParam(value = "avatar", required = false) org.springframework.web.multipart.MultipartFile avatar,
+            @RequestParam(value = "imageFile", required = false) org.springframework.web.multipart.MultipartFile imageFile,
+            @RequestParam(value = "removeExistingImage", required = false) Boolean removeExistingImage
+    ) {
         User kid = userService.getUserById(kidId);
-        if (req.getNickname() != null) kid.setNickname(req.getNickname());
-        if (req.getPassword() != null && !req.getPassword().isEmpty()) {
-            kid.setPassword(com.starquest.backend.security.Sha256Util.sha256Hex(req.getPassword()));
+        if (nickname != null) kid.setNickname(nickname);
+        if (password != null && !password.isEmpty()) {
+            kid.setPassword(com.starquest.backend.security.Sha256Util.sha256Hex(password));
         }
-        if (req.getStarBalance() != null) kid.setStarBalance(req.getStarBalance());
+        if (starBalance != null) kid.setStarBalance(starBalance);
+        org.springframework.web.multipart.MultipartFile fileToSave = (avatar != null && !avatar.isEmpty()) ? avatar : imageFile;
+        if (fileToSave != null && !fileToSave.isEmpty()) {
+            String avatarUrl = fileStorageService.saveImage(fileToSave);
+            kid.setAvatar(avatarUrl);
+        }
+        // handle explicit removal of existing image
+        if ((removeExistingImage != null && removeExistingImage) && fileToSave == null) {
+            kid.setAvatar(null);
+        }
         userService.saveUser(kid);
         return ResponseEntity.ok(kid);
     }

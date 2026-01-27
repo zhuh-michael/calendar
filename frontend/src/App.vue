@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { auth } from '@/utils/api.js'
@@ -257,6 +257,33 @@ onMounted(async () => {
     }, 500)
   }
 })
+
+// 如果用户在登录流程中后来被设置（首次登录后），确保触发打卡检查
+watch(
+  () => userStore.currentUser,
+  (newVal, oldVal) => {
+    if (!oldVal && newVal) {
+      // 用户信息在登录后被加载，触发打卡检查
+      try {
+        checkNeedCheckIn()
+      } catch (e) {
+        console.error('checkNeedCheckIn on user change failed:', e)
+      }
+    }
+  }
+)
+// 监听全局 trigger 事件，供登录页在导航前主动触发一次打卡检查（避免刷新依赖）
+if (typeof window !== 'undefined') {
+  const _triggerCheckInHandler = () => {
+    try {
+      checkNeedCheckIn()
+    } catch (e) {
+      console.error('checkNeedCheckIn trigger failed:', e)
+    }
+  }
+  window.addEventListener('triggerCheckIn', _triggerCheckInHandler)
+}
+
 </script>
 
 <style>

@@ -4,7 +4,7 @@
     <div class="header">
       <div class="user-info">
         <van-image
-          :src="userInfo.avatar || defaultAvatar"
+          :src="`${apiBaseUrl}/${userInfo.avatar}`"
           round
           width="50"
           height="50"
@@ -46,7 +46,7 @@
         >
           <div class="product-image">
             <van-image
-              :src="reward.imageUrl || defaultProductImage"
+              :src="`${apiBaseUrl}/${reward.imageUrl}`"
               width="100%"
               height="120"
               fit="cover"
@@ -158,6 +158,7 @@ import { ref, onMounted, computed } from 'vue'
 import { showToast, Dialog } from 'vant'
 import { rewards } from '@/utils/api.js'
 import { useUserStore } from '@/stores/user.js'
+import { getApiBaseUrl } from '@/utils/config.js' 
 
 const userStore = useUserStore()
 const userInfo = computed(() => userStore.currentUser)
@@ -171,6 +172,8 @@ const defaultProductImage = 'https://via.placeholder.com/150x120?text=🎁'
 
 const rewardList = computed(() => rewardsList.value)
 
+// API基础URL
+const apiBaseUrl = getApiBaseUrl()
 // 加载用户信息
 const loadUserInfo = async () => {
   await userStore.loadUserInfo(true) // 强制刷新以获取最新数据

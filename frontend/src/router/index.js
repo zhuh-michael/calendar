@@ -35,6 +35,18 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
+// 在每次路由跳转后触发一次全局打卡检查（针对 kid 端页面），
+// 通过派发 window 事件，供 App.vue 监听并执行 checkNeedCheckIn。
+router.afterEach((to) => {
+  try {
+    if (typeof window !== 'undefined' && to.path.startsWith('/kid') && to.name !== 'KidLogin') {
+      window.dispatchEvent(new CustomEvent('triggerCheckIn'))
+    }
+  } catch (e) {
+    // ignore
+  }
+})
+
 export default router
 
 

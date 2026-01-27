@@ -7,7 +7,7 @@
         <div class="avatar-section">
           <div class="avatar-frame" :class="avatarFrameClass">
             <van-image
-              :src="userInfo.avatar || defaultAvatar"
+              :src="`${apiBaseUrl}/${userInfo.avatar}`"
               round
               width="64"
               height="64"

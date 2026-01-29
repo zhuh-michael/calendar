@@ -18,7 +18,7 @@
           </div>
         </div>
       </div>
-      <div class="back-btn">
+      <!-- <div class="back-btn">
         <van-button
           type="default"
           icon="arrow-left"
@@ -27,7 +27,7 @@
         >
           返回
         </van-button>
-      </div>
+      </div> -->
     </div>
 
     <!-- 幸运屋主体 -->

@@ -46,12 +46,30 @@
             <div class="exp-bar-fill" :style="{ width: levelProgress + '%' }"></div>
           </div>
         </div>
+
+        <!-- 日期选择器（闹钟按钮） -->
+        <div class="date-picker-section">
+          <van-button
+            round
+            type="warning"
+            class="date-picker-btn"
+            @click="showDatePicker = true"
+          >
+            <van-icon name="clock" size="20" />
+          </van-button>
+          <div class="date-label">{{ formattedSelectedDate }}</div>
+        </div>
       </div>
     </div>
 
     <!-- 今日任务流 -->
     <div class="task-section">
-      <h3 class="section-title">📅 今日任务</h3>
+      <h3 class="section-title">📅 {{ isToday ? '今日任务' : selectedDateDisplay }}</h3>
+
+      <!-- 加载状态 -->
+      <div v-if="isLoadingTasks" class="loading-container">
+        <van-loading type="spinner" size="24px" color="#FF9800">加载中...</van-loading>
+      </div>
 
       <!-- 待办任务 -->
       <div class="todo-tasks">
@@ -65,7 +83,7 @@
             v-for="task in pendingTasks"
             :key="task.id"
             class="task-card animate__animated animate__fadeInUp"
-            :class="{ completing: completingTasks.includes(task.id) }"
+            :class="{ completing: completingTasks.includes(task.id), 'not-today': !isToday }"
           >
             <div class="task-content">
               <div class="task-info">
@@ -79,6 +97,10 @@
                   <span>+{{ task.rewardStars }}</span>
                   <span class="xp-reward">+{{ task.rewardStars }} XP</span>
                 </div>
+                <div v-if="!isToday" class="task-time-hint">
+                  <van-icon name="clock" size="12" />
+                  <span>任务时间：{{ formatTaskTime(task.startTime) }}</span>
+                </div>
               </div>
               <div class="task-actions">
                 <van-button
@@ -86,10 +108,10 @@
                   :loading="completingTasks.includes(task.id)"
                   @click="completeTask(task)"
                   class="complete-btn"
-                  :disabled="task.status !== 0 && task.status !== 'TODO'"
+                  :disabled="!canCompleteTask(task)"
                 >
                   <template v-if="!completingTasks.includes(task.id)">
-                    <van-icon name="success" />
+                    <van-icon :name="isToday ? 'success' : 'eye-o'" />
                   </template>
                 </van-button>
               </div>
@@ -227,6 +249,15 @@
       </template>
     </van-dialog>
 
+    <!-- 日期选择器弹窗（使用 Calendar 组件） -->
+    <van-calendar
+      v-model:show="showDatePicker"
+      :min-date="minDate"
+      :max-date="maxDate"
+      :show-confirm="false"
+      @select="onDateSelect"
+    />
+
     <!-- 幸运屋悬浮按钮 -->
     <div class="floating-lucky-btn" @click="$router.push('/kid/lucky-house')">
       <div class="lucky-icon">🎁</div>
@@ -322,6 +353,95 @@ const completingTasks = ref([])
 const showFireworks = ref(false)
 const defaultAvatar = '/default-avatar.svg'
 
+// 日期选择器相关
+const showDatePicker = ref(false)
+const selectedDate = ref(new Date())
+const minDate = ref(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) // 30天前
+const maxDate = ref(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)) // 30天后
+const isLoadingTasks = ref(false)
+
+// 是否是今日
+const isToday = computed(() => {
+  const today = new Date()
+  const selected = new Date(selectedDate.value)
+  return today.toDateString() === selected.toDateString()
+})
+
+// 格式化选中的日期显示
+const formattedSelectedDate = computed(() => {
+  const date = new Date(selectedDate.value)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  const weekDay = weekDays[date.getDay()]
+  return `${month}/${day} ${weekDay}`
+})
+
+// 任务列表标题显示
+const selectedDateDisplay = computed(() => {
+  const date = new Date(selectedDate.value)
+  if (isToday.value) return '今日任务'
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}月${day}日任务`
+})
+
+// 选择日期（点击日期时触发）
+const onDateSelect = (date) => {
+  selectedDate.value = date
+  showDatePicker.value = false
+  loadTasksForDate()
+}
+
+// 加载指定日期的任务
+const loadTasksForDate = async () => {
+  if (!userInfo.value?.userId) {
+    console.warn('User not loaded yet')
+    return
+  }
+
+  isLoadingTasks.value = true
+  try {
+    // 使用本地时区格式化日期，避免时区问题
+    const year = selectedDate.value.getFullYear()
+    const month = String(selectedDate.value.getMonth() + 1).padStart(2, '0')
+    const day = String(selectedDate.value.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+
+    console.log('Loading tasks for date:', dateStr, 'isToday:', isToday.value)
+
+    const response = await tasks.getByKidAndDate(userInfo.value.userId, dateStr)
+    const allTasks = response.data || []
+
+    // 分类任务 - 支持后端返回数字或字符串状态
+    const isTodo = (s) => s === 'TODO' || s === 0 || s === '0'
+    const isPending = (s) => s === 'PENDING' || s === 1 || s === '1'
+    const isDone = (s) => s === 'DONE' || s === 2 || s === '2'
+
+    pendingTasks.value = allTasks.filter(task => isTodo(task.status))
+    reviewingTasks.value = allTasks.filter(task => isPending(task.status))
+    completedTasks.value = allTasks.filter(task => isDone(task.status))
+
+    console.log('Tasks loaded:', {
+      pending: pendingTasks.value.length,
+      reviewing: reviewingTasks.value.length,
+      completed: completedTasks.value.length
+    })
+  } catch (error) {
+    console.error('Failed to load tasks:', error)
+    showToast('加载任务失败')
+  } finally {
+    isLoadingTasks.value = false
+  }
+}
+
+// 判断任务是否可完成（仅今日且状态为待办）
+const canCompleteTask = (task) => {
+  if (!isToday.value) return false
+  const isTodo = (s) => s === 'TODO' || s === 0 || s === '0'
+  return isTodo(task.status)
+}
+
 // 结果上传相关
 const showEvidenceDialog = ref(false)
 const showViewEvidenceDialog = ref(false)
@@ -415,23 +535,16 @@ const loadUserInfo = async () => {
 
 // 加载今日任务
 const loadTodayTasks = async () => {
-  try {
-    const today = new Date().toISOString().split('T')[0]
-    const response = await tasks.getByKidAndDate(userInfo.value.userId, today)
-    const allTasks = response.data
+  await loadTasksForDate()
+}
 
-    // 分类任务 - 支持后端返回数字或字符串状态
-    const isTodo = (s) => s === 'TODO' || s === 0 || s === '0'
-    const isPending = (s) => s === 'PENDING' || s === 1 || s === '1'
-    const isDone = (s) => s === 'DONE' || s === 2 || s === '2'
-
-    pendingTasks.value = allTasks.filter(task => isTodo(task.status))
-    reviewingTasks.value = allTasks.filter(task => isPending(task.status))
-    completedTasks.value = allTasks.filter(task => isDone(task.status))
-  } catch (error) {
-    console.error('Failed to load tasks:', error)
-    showToast('加载任务失败')
-  }
+// 格式化任务时间
+const formatTaskTime = (isoTime) => {
+  if (!isoTime) return ''
+  const date = new Date(isoTime)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
 }
 
 // 完成任务
@@ -778,6 +891,38 @@ onMounted(() => {
   min-width: 0;
 }
 
+/* 日期选择器区域 */
+.date-picker-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.date-picker-btn {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  background: linear-gradient(45deg, #FF9800, #F57C00) !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3) !important;
+}
+
+.date-picker-btn:active {
+  transform: scale(0.95);
+}
+
+.date-label {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 第一行：名字 + 称号 */
 .name-row {
   display: flex;
@@ -856,8 +1001,16 @@ onMounted(() => {
   font-weight: bold;
   color: #333;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  color: #FF9800;
 }
 
 .subsection-title {
@@ -899,6 +1052,45 @@ onMounted(() => {
 
 .task-card.reviewing .task-reward {
   color: #FF9800;
+}
+
+/* 非今日任务的样式 */
+.task-card.not-today {
+  background: rgba(245, 245, 245, 0.9);
+  border-color: #E0E0E0;
+  opacity: 0.85;
+}
+
+.task-card.not-today .task-title {
+  color: #888;
+}
+
+.task-card.not-today .task-reward {
+  color: #aaa;
+}
+
+.task-card.not-today .complete-btn {
+  background: #e0e0e0 !important;
+  box-shadow: none !important;
+}
+
+.task-card.not-today .complete-btn .van-icon {
+  color: #999 !important;
+}
+
+.task-card.not-today:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* 任务时间提示 */
+.task-time-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #999;
 }
 
 .reviewing-text {

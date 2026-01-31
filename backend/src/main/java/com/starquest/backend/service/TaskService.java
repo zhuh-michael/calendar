@@ -257,4 +257,13 @@ public class TaskService {
     public void deleteEvidenceByTaskId(Long taskId) {
         taskEvidenceRepository.deleteByTaskId(taskId);
     }
+
+    public List<Task> getOverdueTasksByKid(Long kidId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskRepository.findOverdueTasksByKid(kidId, pageable);
+    }
+
+    public Long getOverdueTasksCountByKid(Long kidId) {
+        return taskRepository.countOverdueTasksByKid(kidId);
+    }
 }

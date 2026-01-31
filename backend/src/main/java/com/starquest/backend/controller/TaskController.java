@@ -191,5 +191,19 @@ public class TaskController {
         return ResponseEntity.ok().build();
     }
 
-    
+    @GetMapping("/kid/{kidId}/overdue")
+    public ResponseEntity<List<Task>> getOverdueTasks(
+            @PathVariable Long kidId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Task> tasks = taskService.getOverdueTasksByKid(kidId, page, size);
+        return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/kid/{kidId}/overdue/count")
+    public ResponseEntity<Long> getOverdueTasksCount(@PathVariable Long kidId) {
+        Long count = taskService.getOverdueTasksCountByKid(kidId);
+        return ResponseEntity.ok(count);
+    }
+
 }

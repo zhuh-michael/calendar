@@ -178,6 +178,66 @@
           </div>
         </div>
       </div>
+
+      <!-- 延期任务区域 -->
+      <div class="overdue-tasks" v-if="overdueTasks.length > 0 || overdueCount > 0">
+        <h4 class="subsection-title overdue-title">⚠️ 延期任务 <span class="overdue-count">({{ overdueCount }}项)</span></h4>
+
+        <van-pull-refresh v-model="isRefreshingOverdue" @refresh="onRefreshOverdue">
+          <div class="task-list">
+            <div
+              v-for="task in overdueTasks"
+              :key="task.id"
+              class="task-card animate__animated animate__fadeInUp overdue"
+            >
+              <div class="task-content">
+                <div class="task-info">
+                  <h4 class="task-title">{{ task.title }}</h4>
+                  <div v-if="task.rejectReason" class="task-reject-reason">
+                    <van-icon name="warning" color="#ff4444" size="14" />
+                    <span class="reject-text">上次被拒绝：{{ task.rejectReason }}</span>
+                  </div>
+                  <div class="task-reward">
+                    <van-icon name="star" color="#FFD700" size="16" />
+                    <span>+{{ task.rewardStars }}</span>
+                  </div>
+                  <div class="task-time-hint overdue-hint">
+                    <van-icon name="clock" size="12" />
+                    <span>任务时间：{{ formatTaskDateTime(task.startTime) }}</span>
+                  </div>
+                </div>
+                <div class="task-actions">
+                  <van-button
+                    round
+                    :loading="completingTasks.includes(task.id)"
+                    @click="completeTask(task)"
+                    class="complete-btn"
+                  >
+                    <van-icon :name="task.status === 'PENDING' || task.status === 1 ? 'eye-o' : 'success'" />
+                  </van-button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 加载更多 -->
+            <div v-if="overdueTasks.length < overdueCount" class="load-more">
+              <van-button
+                plain
+                type="warning"
+                :loading="isLoadingMoreOverdue"
+                @click="loadMoreOverdueTasks"
+              >
+                加载更多
+              </van-button>
+            </div>
+
+            <!-- 没有更多数据提示 -->
+            <div v-else-if="overdueTasks.length > 0" class="no-more-data">
+              <span>已加载全部延期任务</span>
+            </div>
+          </div>
+        </van-pull-refresh>
+      </div>
     </div>
 
     <!-- 烟花特效 -->
@@ -350,6 +410,11 @@ const pendingTasks = ref([])
 const reviewingTasks = ref([])
 const completedTasks = ref([])
 const completingTasks = ref([])
+const overdueTasks = ref([])
+const overdueCount = ref(0)
+const overduePage = ref(0)
+const isLoadingMoreOverdue = ref(false)
+const isRefreshingOverdue = ref(false)
 const showFireworks = ref(false)
 const defaultAvatar = '/default-avatar.svg'
 
@@ -536,6 +601,71 @@ const loadUserInfo = async () => {
 // 加载今日任务
 const loadTodayTasks = async () => {
   await loadTasksForDate()
+}
+
+// 加载延期任务
+const loadOverdueTasks = async (refresh = false) => {
+  if (!userInfo.value?.userId) return
+
+  if (refresh) {
+    overduePage.value = 0
+    overdueTasks.value = []
+    isRefreshingOverdue.value = true
+  }
+
+  try {
+    const response = await tasks.getOverdue(userInfo.value.userId, overduePage.value, 20)
+    const newTasks = response.data || []
+
+    if (refresh) {
+      overdueTasks.value = newTasks
+    } else {
+      overdueTasks.value = [...overdueTasks.value, ...newTasks]
+    }
+
+    // 获取延期任务总数
+    const countResponse = await tasks.getOverdueCount(userInfo.value.userId)
+    overdueCount.value = countResponse.data || 0
+  } catch (error) {
+    console.error('Failed to load overdue tasks:', error)
+  } finally {
+    isRefreshingOverdue.value = false
+  }
+}
+
+// 刷新延期任务
+const onRefreshOverdue = async () => {
+  overduePage.value = 0
+  await loadOverdueTasks(true)
+}
+
+// 加载更多延期任务
+const loadMoreOverdueTasks = async () => {
+  if (isLoadingMoreOverdue.value || overdueTasks.value.length >= overdueCount.value) return
+
+  isLoadingMoreOverdue.value = true
+  try {
+    overduePage.value += 1
+    const response = await tasks.getOverdue(userInfo.value.userId, overduePage.value, 20)
+    const newTasks = response.data || []
+    overdueTasks.value = [...overdueTasks.value, ...newTasks]
+  } catch (error) {
+    console.error('Failed to load more overdue tasks:', error)
+    overduePage.value -= 1
+  } finally {
+    isLoadingMoreOverdue.value = false
+  }
+}
+
+// 格式化任务日期时间（用于延期任务显示完整日期）
+const formatTaskDateTime = (isoTime) => {
+  if (!isoTime) return ''
+  const date = new Date(isoTime)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${month}月${day}日 ${hours}:${minutes}`
 }
 
 // 格式化任务时间
@@ -806,6 +936,7 @@ onMounted(() => {
   initAudio()
   loadUserInfo()
   loadTodayTasks()
+  loadOverdueTasks(true)
 })
 </script>
 
@@ -1175,6 +1306,43 @@ onMounted(() => {
   font-size: 18px;
   font-weight: bold;
   color: #FF9800;
+}
+
+/* 延期任务区域 */
+.overdue-tasks {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px dashed #FF9800;
+}
+
+.overdue-title {
+  color: #FF6B35 !important;
+}
+
+.overdue-count {
+  font-size: 14px;
+  color: #FF6B35;
+}
+
+.overdue-tasks .task-card {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 152, 0, 0.05));
+  border-color: #FF9800;
+}
+
+.overdue-hint {
+  color: #FF6B35 !important;
+}
+
+.load-more {
+  text-align: center;
+  padding: 20px;
+}
+
+.no-more-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
 }
 
 .empty-state {

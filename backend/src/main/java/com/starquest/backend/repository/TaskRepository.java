@@ -54,4 +54,17 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
                                          @Param("status") Task.TaskStatus status,
                                          @Param("date") LocalDate date,
                                          Pageable pageable);
+
+    // 延期任务查询：startTime < 今天，且状态为 TODO(0) 或 PENDING(1)
+    @Query("SELECT t FROM Task t WHERE t.kidId = :kidId AND " +
+           "DATE(t.startTime) < DATE(CURRENT_DATE) AND " +
+           "(t.status = 0 OR t.status = 1) " +
+           "ORDER BY t.startTime DESC")
+    List<Task> findOverdueTasksByKid(@Param("kidId") Long kidId, Pageable pageable);
+
+    // 延期任务计数
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.kidId = :kidId AND " +
+           "DATE(t.startTime) < DATE(CURRENT_DATE) AND " +
+           "(t.status = 0 OR t.status = 1)")
+    Long countOverdueTasksByKid(@Param("kidId") Long kidId);
 }

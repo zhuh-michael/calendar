@@ -84,7 +84,9 @@ export const tasks = {
   getEvidence: (taskId) => client.get(`/api/tasks/${taskId}/evidence`),
   deleteEvidence: (evidenceId) => client.delete(`/api/tasks/evidence/${evidenceId}`),
   fromTemplate: (templateId, kidId, startDate, endDate) =>
-    client.post('/api/tasks/from-template', null, { params: { templateId, kidId, startDate, endDate } })
+    client.post('/api/tasks/from-template', null, { params: { templateId, kidId, startDate, endDate } }),
+  getOverdue: (kidId, page = 0, size = 20) => client.get(`/api/tasks/kid/${kidId}/overdue`, { params: { page, size } }),
+  getOverdueCount: (kidId) => client.get(`/api/tasks/kid/${kidId}/overdue/count`)
 }
 
 export const rewards = {

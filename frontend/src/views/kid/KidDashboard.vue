@@ -301,9 +301,8 @@
             type="primary"
             @click="submitWithEvidence"
             :loading="uploadingEvidence"
-            :disabled="!evidenceFiles.length"
           >
-            {{ uploadingEvidence ? '提交中...' : '提交审核' }}
+            {{ uploadingEvidence ? '提交中...' : '提交' }}
           </van-button>
         </div>
       </template>
@@ -837,16 +836,13 @@ const chooseFromGallery = () => {
 }
 
 const submitWithEvidence = async () => {
-  if (!evidenceFiles.value || evidenceFiles.value.length === 0) {
-    showToast('请先上传完成照片')
-    return
-  }
-
   uploadingEvidence.value = true
 
   try {
-    // 先上传结果（覆盖式提交，后端会删除旧记录）
-    await tasks.uploadEvidence(selectedTaskForEvidence.value.id, evidenceFiles.value)
+    // 如果有选择图片，则上传结果（覆盖式提交，后端会删除旧记录）
+    if (evidenceFiles.value && evidenceFiles.value.length > 0) {
+      await tasks.uploadEvidence(selectedTaskForEvidence.value.id, evidenceFiles.value)
+    }
 
     // 再完成任务
     await tasks.complete(selectedTaskForEvidence.value.id, userInfo.value.userId)

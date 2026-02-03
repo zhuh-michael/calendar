@@ -117,6 +117,15 @@ public class RewardController {
     }
 
     /**
+     * 删除商品（软删除，将 active 设为 false）
+     */
+    @DeleteMapping("/{rewardId}")
+    public ResponseEntity<Void> deleteReward(@PathVariable Long rewardId) {
+        rewardService.deleteReward(rewardId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * 获取待处理订单（管理员视图） - 为兼容前端请求 /api/rewards/pending-orders
      */
     @GetMapping("/pending-orders")

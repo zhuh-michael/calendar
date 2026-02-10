@@ -10,7 +10,7 @@ RUN npm ci
 COPY . .
 
 # Set production environment variables explicitly
-ENV VITE_API_BASE=http://47.100.5.220
+ENV VITE_API_BASE=http://www.zhuchenyi.com
 ENV VITE_APP_ENV=production
 ENV VITE_ENABLE_DEVTOOLS=false
 ENV VITE_ENABLE_MOCK=false

@@ -1,5 +1,7 @@
 package com.starquest.backend.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,10 +44,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 允许开发时本地前端的端口（学员/家长）
-        configuration.setAllowCredentials(true);
-        // Allow common local dev origins (supports different host bindings like 127.0.0.1)
-        configuration.setAllowedOriginPatterns(java.util.List.of("http://localhost:*", "http://127.0.0.1:*"));
+
+        // 允许所有来源（开发/测试方便），或按需限制
+        configuration.setAllowedOriginPatterns(List.of("*")); // Spring Boot 2.4+
+
+        // 关键：JWT 不需要 Cookie，所以 allowCredentials = false
+        configuration.setAllowCredentials(false); // 必须为 false 才能用 "*"
+
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
 

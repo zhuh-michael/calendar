@@ -1,0 +1,470 @@
+/* LuckyHouse 样式 */
+
+/* 页面容器 */
+.lucky-house {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 30%, #D2691E 70%, #CD853F 100%);
+  padding: 24rpx;
+  padding-bottom: 180rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 顶部栏 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 24rpx 30rpx;
+  margin-bottom: 48rpx;
+  box-shadow: 0 16rpx 64rpx rgba(0, 0, 0, 0.1);
+  border: 4rpx solid #FFD700;
+  position: relative;
+  z-index: 10;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.user-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  border: 6rpx solid #FFD700;
+  box-shadow: 0 8rpx 30rpx rgba(255, 215, 0, 0.3);
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 6rpx;
+  display: block;
+}
+
+.star-balance {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  color: #FF9800;
+  font-weight: bold;
+  font-size: 28rpx;
+}
+
+.star-icon {
+  font-size: 32rpx;
+}
+
+/* 幸运屋主体 */
+.lucky-section {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+}
+
+.lucky-title {
+  font-size: 64rpx;
+  font-weight: bold;
+  color: #FFD700;
+  margin-bottom: 16rpx;
+  text-shadow: 6rpx 6rpx 12rpx rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.lucky-subtitle {
+  font-size: 28rpx;
+  color: #FFF;
+  margin-bottom: 60rpx;
+  text-shadow: 2rpx 4rpx rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.lucky-probabilities {
+  font-size: 24rpx;
+  color: #FFF9E6;
+  margin-top: -32rpx;
+  margin-bottom: 32rpx;
+  opacity: 0.95;
+  display: block;
+}
+
+/* 宝箱区域 */
+.chest-area {
+  position: relative;
+  height: 480rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 60rpx;
+}
+
+.treasure-chest {
+  position: relative;
+  width: 360rpx;
+  height: 280rpx;
+}
+
+.treasure-chest.shaking {
+  animation: chest-shake 0.5s ease-in-out infinite;
+}
+
+@keyframes chest-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10rpx) rotate(-4deg); }
+  75% { transform: translateX(10rpx) rotate(4deg); }
+}
+
+.chest-lid {
+  position: absolute;
+  top: -16rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300rpx;
+  height: 160rpx;
+  background: linear-gradient(45deg, #8B4513, #A0522D);
+  border-radius: 32rpx 32rpx 12rpx 12rpx;
+  border: 6rpx solid rgba(101, 67, 33, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.9s cubic-bezier(.2,.9,.3,1);
+  transform-origin: center top;
+  z-index: 4;
+}
+
+.chest-lid.open {
+  transform: translateX(-50%) rotateX(-120deg);
+}
+
+.chest-body {
+  position: absolute;
+  bottom: -12rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 340rpx;
+  height: 200rpx;
+  background: linear-gradient(180deg, #6b3e25, #7a4a2c);
+  border-radius: 0 0 24rpx 24rpx;
+  border: 6rpx solid rgba(101, 67, 33, 0.95);
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: inset 0 -36rpx 80rpx rgba(0,0,0,0.25);
+}
+
+.chest-glow {
+  position: absolute;
+  top: -24rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360rpx;
+  height: 200rpx;
+  border-radius: 32rpx;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.20), transparent 40%);
+  filter: blur(12rpx);
+  animation: glow-pulse 2s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+@keyframes glow-pulse {
+  from { opacity: 0.3; transform: translateX(-50%) scale(1); }
+  to { opacity: 0.8; transform: translateX(-50%) scale(1.1); }
+}
+
+.chest-emoji {
+  display: inline-block;
+  filter: drop-shadow(0 12rpx 24rpx rgba(0,0,0,0.35));
+}
+
+.chest-lid .chest-emoji {
+  font-size: 80rpx;
+  transform: translateY(-12rpx);
+}
+
+.chest-body .chest-emoji {
+  font-size: 72rpx;
+  transform: translateY(10rpx);
+}
+
+/* 星星不足提示 */
+.insufficient-stars {
+  position: absolute;
+  bottom: 48rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: #FFF;
+  text-shadow: 2rpx 4rpx rgba(0, 0, 0, 0.5);
+}
+
+.star-big {
+  font-size: 80rpx;
+  display: block;
+}
+
+.insufficient-text {
+  font-size: 32rpx;
+  margin-bottom: 10rpx;
+  display: block;
+}
+
+.need-more {
+  font-size: 24rpx;
+  opacity: 0.8;
+  display: block;
+}
+
+/* 抽奖中动画 */
+.drawing-animation {
+  position: absolute;
+  bottom: 60rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.sparkles {
+  margin-bottom: 32rpx;
+}
+
+.sparkle {
+  display: inline-block;
+  font-size: 56rpx;
+  margin: 0 8rpx;
+  animation: sparkle-float 1s ease-in-out infinite alternate;
+}
+
+.sparkle:nth-child(1) { animation-delay: 0s; }
+.sparkle:nth-child(2) { animation-delay: 0.2s; }
+.sparkle:nth-child(3) { animation-delay: 0.4s; }
+.sparkle:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes sparkle-float {
+  from { transform: translateY(0) rotate(0deg); }
+  to { transform: translateY(-20rpx) rotate(360deg); }
+}
+
+.drawing-text {
+  color: #FFD700;
+  font-size: 32rpx;
+  font-weight: bold;
+  text-shadow: 4rpx 8rpx rgba(0, 0, 0, 0.5);
+}
+
+/* 抽奖结果 */
+.draw-result {
+  margin-bottom: 60rpx;
+}
+
+.result-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 25rpx;
+  padding: 48rpx 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 30rpx 70rpx rgba(0, 0, 0, 0.2);
+  border: 6rpx solid #FFD700;
+}
+
+.result-card.grand-prize {
+  border-color: #FFD700;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
+}
+
+.result-card.good-prize {
+  border-color: #2196F3;
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+}
+
+.result-card.small-prize {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+}
+
+.result-card.encouragement {
+  border-color: #FF9800;
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05));
+}
+
+.result-icon {
+  margin-bottom: 24rpx;
+}
+
+.result-emoji {
+  font-size: 100rpx;
+  display: block;
+  text-align: center;
+}
+
+.result-title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.result-description {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 24rpx;
+  display: block;
+}
+
+.result-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #FF9800;
+}
+
+.continue-btn {
+  background: linear-gradient(45deg, #FF6B35, #F7931E);
+  border: none;
+  color: white;
+  padding: 24rpx 60rpx;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* 抽奖历史 */
+.history-section {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 20rpx;
+  padding: 32rpx;
+  box-shadow: 0 16rpx 50rpx rgba(0, 0, 0, 0.1);
+}
+
+.history-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+  text-align: center;
+  display: block;
+}
+
+.empty-history {
+  text-align: center;
+  padding: 80rpx 40rpx;
+  color: #999;
+}
+
+.history-empty-icon {
+  font-size: 80rpx;
+  display: block;
+}
+
+.empty-text {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  display: block;
+}
+
+.history-list {
+  max-height: 480rpx;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-emoji {
+  font-size: 48rpx;
+  min-width: 56rpx;
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-result {
+  display: block;
+  font-weight: bold;
+  color: #333;
+  font-size: 28rpx;
+}
+
+.history-time {
+  display: block;
+  color: #999;
+  font-size: 24rpx;
+}
+
+.history-stars {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  color: #FF9800;
+  font-weight: bold;
+  font-size: 28rpx;
+}
+
+/* 底部导航栏 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 4rpx solid #FFD700;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  padding-bottom: 40rpx;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx;
+  border-radius: 20rpx;
+  min-width: 120rpx;
+}
+
+.nav-item.active {
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+}
+
+.nav-item.active text {
+  color: #8B4513;
+  font-weight: bold;
+}
+
+.nav-icon {
+  font-size: 48rpx;
+  margin-bottom: 6rpx;
+}
+
+.nav-item text:last-child {
+  font-size: 24rpx;
+  color: #666;
+}

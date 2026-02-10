@@ -1,0 +1,387 @@
+<view class="kid-dashboard">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="user-info-row">
+      <!-- 头像 + 游戏风格边框 -->
+      <view class="avatar-section">
+        <view class="avatar-frame {{avatarFrameClass}}">
+          <image
+            src="{{userInfo.avatar ? apiBaseUrl + '/' + userInfo.avatar : '../images/default-avatar.png'}}"
+            mode="aspectFill"
+            class="user-avatar"
+          ></image>
+          <!-- 等级徽章 -->
+          <view class="level-badge-mini">Lv.{{userInfo.level || 1}}</view>
+        </view>
+      </view>
+
+      <!-- 用户信息 -->
+      <view class="user-info-col">
+        <!-- 第一行：名字 + 称号 -->
+        <view class="name-row">
+          <text class="user-name">{{userInfo.nickname}}</text>
+          <text class="user-title">{{userInfo.levelTitle || '星际见习生'}}</text>
+        </view>
+
+        <!-- 第二行：星星 + XP + 进度 -->
+        <view class="stats-row">
+          <!-- 星星 -->
+          <view class="stat-item star-item">
+            <text class="star-icon">⭐</text>
+            <text>{{userInfo.starBalance}}</text>
+          </view>
+
+          <!-- XP信息 -->
+          <view class="xp-info">
+            <text class="xp-text">{{userInfo.exp || 0}} XP</text>
+            <text class="xp-next">距Lv.{{(userInfo.level || 1) + 1}}还需 {{xpToNextLevel}} XP</text>
+          </view>
+        </view>
+
+        <!-- 进度条 -->
+        <view class="exp-bar-mini">
+          <view class="exp-bar-fill" style="width: {{levelProgress}}%"></view>
+        </view>
+      </view>
+
+      <!-- 日期选择器 -->
+      <picker mode="date" value="{{selectedDate}}" bindchange="onDateChange">
+        <view class="date-picker-section">
+          <view class="date-picker-btn">
+            <text class="date-icon">📅</text>
+          </view>
+          <text class="date-label">{{formattedSelectedDate}}</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 今日任务流 -->
+  <view class="task-section">
+    <text class="section-title">{{isToday ? '📅 今日任务' : selectedDateDisplay}}</text>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{isLoadingTasks}}" class="loading-container">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <!-- 待办任务 -->
+    <view class="todo-tasks">
+      <text class="subsection-title">⏳ 待完成</text>
+      <view wx:if="{{pendingTasks.length === 0}}" class="empty-state">
+        <text class="empty-emoji">😊</text>
+        <text class="empty-text">今天没有待完成的任务！</text>
+      </view>
+      <view wx:else class="task-list">
+        <view
+          wx:for="{{pendingTasks}}"
+          wx:key="id"
+          class="task-card"
+          data-id="{{item.id}}"
+          bindtap="completeTask"
+        >
+          <view class="task-content">
+            <view class="task-info">
+              <text class="task-title">{{item.title}}</text>
+              <view wx:if="{{item.rejectReason}}" class="task-reject-reason">
+                <text class="reject-icon">⚠️</text>
+                <text class="reject-text">上次被拒绝：{{item.rejectReason}}</text>
+              </view>
+              <view class="task-reward">
+                <text class="star-icon">⭐</text>
+                <text>+{{item.rewardStars}}</text>
+                <text class="xp-reward">+{{item.rewardStars}} XP</text>
+              </view>
+              <view class="task-time-hint">
+                <text class="clock-icon">🕐</text>
+                <text>{{item.formattedTime}}</text>
+              </view>
+            </view>
+            <view class="task-actions">
+              <view class="complete-btn" data-task="{{item}}" catchtap="handleComplete">
+  <text class="btn-text">{{isToday ? '✓' : '◎'}}</text>
+</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 审核中任务 -->
+    <view class="pending-review-tasks" wx:if="{{reviewingTasks.length > 0}}">
+      <text class="subsection-title">⏳ 审核中</text>
+      <view class="task-list">
+        <view
+          wx:for="{{reviewingTasks}}"
+          wx:key="id"
+          class="task-card reviewing"
+        >
+          <view class="task-content">
+            <view class="task-info">
+              <text class="task-title">{{item.title}}</text>
+              <view class="task-reward">
+                <text class="star-icon">⭐</text>
+                <text>待审核 +{{item.rewardStars}}</text>
+              </view>
+            </view>
+            <view class="task-actions">
+              <button size="mini" class="review-btn" data-task="{{item}}" bindtap="viewTaskEvidence">查看照片</button>
+              <view class="reviewing-status">
+                <text class="clock-icon">⏰</text>
+                <text class="reviewing-text">审核中</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已完成任务 -->
+    <view class="completed-tasks">
+      <text class="subsection-title">✅ 已完成</text>
+      <view wx:if="{{completedTasks.length === 0}}" class="empty-state">
+        <text class="empty-emoji">🚩</text>
+        <text class="empty-text">还没有完成的任务</text>
+      </view>
+      <view wx:else class="completed-list">
+        <view
+          wx:for="{{completedTasks}}"
+          wx:key="id"
+          class="completed-task-item"
+        >
+          <text class="success-icon">✓</text>
+          <text class="task-title">{{item.title}}</text>
+          <view class="task-reward">
+            <text class="star-icon">⭐</text>
+            <text>+{{item.rewardStars}}</text>
+          </view>
+          <button size="mini" type="info" class="view-evidence-btn" data-task="{{item}}" bindtap="viewTaskEvidence">查看照片</button>
+        </view>
+        <view class="today-total">
+          <text class="star-icon">⭐</text>
+          <text>今日奖励：{{todayTotalStars}} 星星</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 延期任务区域 -->
+    <view class="overdue-tasks" wx:if="{{overdueTasks.length > 0 || overdueCount > 0}}">
+      <text class="subsection-title overdue-title">⚠️ 延期任务 <text class="overdue-count">({{overdueCount}}项)</text></text>
+      <view class="task-list">
+        <view
+          wx:for="{{overdueTasks}}"
+          wx:key="id"
+          class="task-card overdue"
+        >
+          <view class="task-content">
+            <view class="task-info">
+              <text class="task-title">{{item.title}}</text>
+              <view wx:if="{{item.rejectReason}}" class="task-reject-reason">
+                <text class="reject-icon">⚠️</text>
+                <text class="reject-text">上次被拒绝：{{item.rejectReason}}</text>
+              </view>
+              <view class="task-reward">
+                <text class="star-icon">⭐</text>
+                <text>+{{item.rewardStars}}</text>
+              </view>
+              <view class="task-time-hint overdue-hint">
+                <text class="clock-icon">🕐</text>
+                <text>任务时间：{{item.formattedDateTime}}</text>
+              </view>
+            </view>
+            <view class="task-actions">
+              <view
+                class="complete-btn"
+                data-task="{{item}}"
+                catchtap="handleComplete"
+              >
+                <text class="btn-text">{{item.status === 'PENDING' || item.status === 1 ? '◌' : '✓'}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 幸运屋悬浮按钮 -->
+  <view class="floating-lucky-btn" bindtap="goToLuckyHouse">
+    <text class="lucky-icon">🎁</text>
+    <text class="lucky-text">幸运屋</text>
+  </view>
+
+  <!-- 底部导航栏 -->
+  <view class="bottom-nav">
+    <view class="nav-item active">
+      <text class="nav-icon">🏠</text>
+      <text>首页</text>
+    </view>
+    <view class="nav-item" bindtap="goToShop">
+      <text class="nav-icon">🏪</text>
+      <text>商店</text>
+    </view>
+    <view class="nav-item" bindtap="goToLuckyHouse">
+      <text class="nav-icon">🎰</text>
+      <text>幸运屋</text>
+    </view>
+  </view>
+
+  <!-- 证据上传对话框 -->
+  <view class="dialog-mask" wx:if="{{showEvidenceDialog}}" bindtap="closeEvidenceDialog"></view>
+  <view class="evidence-dialog" wx:if="{{showEvidenceDialog}}">
+    <view class="dialog-header">
+      <text class="dialog-title">上传完成照片</text>
+    </view>
+    <view class="dialog-body">
+      <view class="task-info">
+        <text class="task-info-title">{{selectedTaskForEvidence.title}}</text>
+        <text class="task-info-desc">{{selectedTaskForEvidence.description}}</text>
+      </view>
+
+      <view wx:if="{{selectedTaskForEvidence.rejectReason}}" class="reject-reason">
+        <text class="reject-icon">⚠️</text>
+        <text>上次被拒绝：{{selectedTaskForEvidence.rejectReason}}</text>
+      </view>
+
+      <view class="evidence-section">
+        <view wx:if="{{evidencePreviews.length === 0}}" class="upload-options">
+          <button class="upload-btn camera-btn" bindtap="takePhoto">📷 拍照</button>
+          <button class="upload-btn gallery-btn" bindtap="chooseFromGallery">🖼️ 从相册选择</button>
+        </view>
+
+        <view wx:else class="preview-section">
+          <scroll-view scroll-x="true" class="preview-scroll">
+            <view class="preview-grid">
+              <view wx:for="{{evidencePreviews}}" wx:key="index" class="preview-item">
+                <image src="{{item}}" mode="aspectFill" class="evidence-preview"></image>
+              </view>
+            </view>
+          </scroll-view>
+          <view class="preview-actions">
+            <button class="preview-btn" bindtap="takePhoto">📷 重拍</button>
+            <button class="preview-btn" bindtap="chooseFromGallery">🖼️ 重新选择</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="dialog-footer">
+      <button class="cancel-btn" bindtap="closeEvidenceDialog">取消</button>
+      <button class="submit-btn" bindtap="submitWithEvidence" loading="{{uploadingEvidence}}">
+        {{uploadingEvidence ? '提交中...' : '提交'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 查看证据对话框 -->
+  <view class="dialog-mask" wx:if="{{showViewEvidenceDialog}}" bindtap="closeViewEvidenceDialog"></view>
+  <view class="view-evidence-dialog" wx:if="{{showViewEvidenceDialog}}">
+    <view class="dialog-header">
+      <text class="dialog-title">任务完成结果</text>
+    </view>
+    <view class="dialog-body">
+      <view class="task-info">
+        <text class="task-info-title">{{selectedTaskForEvidence.title}}</text>
+        <text class="task-info-desc">{{selectedTaskForEvidence.description}}</text>
+      </view>
+
+      <view wx:if="{{selectedTaskForEvidence.rejectReason}}" class="reject-reason">
+        <text class="reject-icon">⚠️</text>
+        <text>拒绝理由：{{selectedTaskForEvidence.rejectReason}}</text>
+      </view>
+
+      <view wx:if="{{currentTaskEvidence.length === 0}}" class="no-evidence">
+        <text class="no-evidence-icon">📷</text>
+        <text class="no-evidence-text">暂无结果图片</text>
+      </view>
+
+      <scroll-view wx:else scroll-y="true" class="evidence-scroll">
+        <view class="evidence-gallery">
+          <view wx:for="{{currentTaskEvidence}}" wx:key="id" class="evidence-item">
+            <image
+              src="{{apiBaseUrl}}/{{item.imagePath}}"
+              mode="aspectFill"
+              class="evidence-image"
+              data-src="{{apiBaseUrl}}/{{item.imagePath}}"
+              bindtap="previewEvidenceImage"
+            ></image>
+            <view class="evidence-meta">
+              <text class="upload-time">{{formatTime(item.uploadTime)}}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="dialog-footer" wx:if="{{isPendingStatus(selectedTaskForEvidence.status)}}">
+      <button class="replace-btn" bindtap="replaceEvidence">重新上传照片</button>
+    </view>
+  </view>
+
+  <!-- ==================== 每日打卡弹窗 ==================== -->
+  <view class="checkin-mask" wx:if="{{showCheckInDialog}}"></view>
+  <view class="checkin-dialog" wx:if="{{showCheckInDialog}}">
+    <view class="checkin-content">
+      <!-- 连签进度 -->
+      <view class="streak-bar-section" wx:if="{{streakDays > 0 || checkedIn}}">
+        <view class="streak-bar-header">
+          <text class="fire-icon">🔥</text>
+          <text class="streak-bar-label">连续打卡</text>
+          <text class="streak-count">{{streakDays}} 天</text>
+        </view>
+        <view class="streak-bar-track">
+          <view class="streak-bar-fill" style="width: {{(streakDays % 7) / 7 * 100}}%"></view>
+        </view>
+        <view class="streak-bar-labels">
+          <text wx:for="{{[1,2,3,4,5,6,7]}}" wx:key="*this" class="streak-day-label {{item <= (streakDays % 7 || 7) ? 'active' : ''}}">{{item}}</text>
+        </view>
+        <view class="streak-bonus-hint">{{streakBonusMessage}}</view>
+      </view>
+
+      <!-- 心情选择 -->
+      <text class="checkin-title">今天心情怎么样？</text>
+      <view class="mood-selector">
+        <view
+          wx:for="{{moodsData}}"
+          wx:key="type"
+          class="mood-item {{selectedMood === item.type ? 'selected' : ''}}"
+          data-mood="{{item.type}}"
+          bindtap="selectMood"
+        >
+          <text class="mood-emoji-wrap">{{item.emoji}}</text>
+          <text class="mood-label">{{item.label}}</text>
+        </view>
+      </view>
+
+      <!-- 打卡结果预览 -->
+      <view class="checkin-result" wx:if="{{checkInResult}}">
+        <text class="result-emoji">{{checkInResult.leveledUp ? '🎉' : '✨'}}</text>
+        <view class="result-text">
+          <text wx:if="{{checkInResult.leveledUp}}" class="level-up-text">恭喜升级！{{checkInResult.newTitle}}</text>
+          <text class="gain-text">获得 {{checkInResult.xpGain}} XP + {{checkInResult.starGain}} 星星</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="checkin-footer">
+      <button class="checkin-btn" bindtap="{{checkedIn ? 'closeCheckInDialog' : 'confirmCheckIn'}}" loading="{{checkInLoading}}">
+        {{checkedIn ? '明天再来' : '打卡'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- ==================== 升级弹窗 ==================== -->
+  <view class="levelup-mask" wx:if="{{showLevelUpDialog}}" bindtap="closeLevelUpDialog"></view>
+  <view class="levelup-dialog" wx:if="{{showLevelUpDialog}}">
+    <view class="levelup-content">
+      <view class="levelup-badge">
+        <text class="levelup-number">{{newLevel}}</text>
+        <text class="levelup-label">级</text>
+      </view>
+      <text class="levelup-title">🎊 升级啦！🎊</text>
+      <text class="levelup-newtitle">{{newTitle}}</text>
+      <text class="levelup-reward">解锁新头像框！</text>
+      <button class="levelup-btn" bindtap="closeLevelUpDialog">太棒了！</button>
+    </view>
+  </view>
+</view>

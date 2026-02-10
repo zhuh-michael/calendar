@@ -1,0 +1,122 @@
+<view class="lucky-house">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="user-info">
+      <image
+        src="{{userInfo.avatar ? apiBaseUrl + '/' + userInfo.avatar : '../images/default-avatar.png'}}"
+        mode="aspectFill"
+        class="user-avatar"
+      ></image>
+      <view class="user-details">
+        <text class="user-name">{{userInfo.nickname}}</text>
+        <view class="star-balance">
+          <text class="star-icon">⭐</text>
+          <text class="star-count">{{userInfo.starBalance}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 幸运屋主体 -->
+  <view class="lucky-section">
+    <text class="lucky-title">🎰 幸运屋</text>
+    <text class="lucky-subtitle">每抽一次消耗 {{drawCost}} 颗星星，试试你的运气吧！</text>
+    <text class="lucky-probabilities">奖池概率：大吉（5%） · 中吉（20%） · 小吉（45%） · 鼓励（30%）</text>
+
+    <!-- 宝箱区域 -->
+    <view class="chest-area">
+      <view
+        class="treasure-chest {{isDrawing ? 'shaking' : ''}} {{showResult ? 'opened' : ''}}"
+        bindtap="performDraw"
+      >
+        <view class="chest-lid {{showResult ? 'open' : ''}}">
+          <text class="chest-emoji">💎</text>
+        </view>
+        <view class="chest-body">
+          <text class="chest-emoji">🎁</text>
+        </view>
+        <view class="chest-glow" wx:if="{{!isDrawing && !showResult && canDraw}}"></view>
+      </view>
+
+      <!-- 星星不足提示 -->
+      <view wx:if="{{!canDraw && !isDrawing}}" class="insufficient-stars">
+        <text class="star-big">⭐</text>
+        <text class="insufficient-text">星星不足</text>
+        <text class="need-more">还需 {{drawCost - userInfo.starBalance}} 颗星星</text>
+      </view>
+
+      <!-- 抽奖中动画 -->
+      <view wx:if="{{isDrawing}}" class="drawing-animation">
+        <view class="sparkles">
+          <text class="sparkle">✨</text>
+          <text class="sparkle">⭐</text>
+          <text class="sparkle">🌟</text>
+          <text class="sparkle">✨</text>
+        </view>
+        <text class="drawing-text">正在抽奖中...</text>
+      </view>
+    </view>
+
+    <!-- 抽奖结果 -->
+    <view wx:if="{{showResult}}" class="draw-result">
+      <view class="result-card {{resultCardClass}}">
+        <view class="result-icon">
+          <text class="result-emoji">{{drawResult.emoji}}</text>
+        </view>
+        <text class="result-title">{{drawResult.title}}</text>
+        <text class="result-description">{{drawResult.description}}</text>
+        <view wx:if="{{drawResult.stars > 0}}" class="result-stars">
+          <text class="star-icon">⭐</text>
+          <text>+{{drawResult.stars}}</text>
+        </view>
+      </view>
+
+      <button class="continue-btn" bindtap="continueDrawing">
+        继续抽奖 ({{drawCost}} 星星)
+      </button>
+    </view>
+
+    <!-- 抽奖历史 -->
+    <view class="history-section">
+      <text class="history-title">📜 抽奖记录</text>
+      <view wx:if="{{drawHistory.length === 0}}" class="empty-history">
+        <text class="history-empty-icon">📋</text>
+        <text class="empty-text">还没有抽奖记录</text>
+      </view>
+      <view wx:else class="history-list">
+        <view
+          wx:for="{{drawHistory}}"
+          wx:key="id"
+          wx:for-item="record"
+          class="history-item"
+        >
+          <text class="history-emoji">{{record.resultEmoji}}</text>
+          <view class="history-info">
+            <text class="history-result">{{record.resultText}}</text>
+            <text class="history-time">{{record.formattedTime}}</text>
+          </view>
+          <view wx:if="{{record.starsEarned > 0}}" class="history-stars">
+            <text class="star-icon">⭐</text>
+            <text>+{{record.starsEarned}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部导航栏 -->
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goToDashboard">
+      <text class="nav-icon">🏠</text>
+      <text>首页</text>
+    </view>
+    <view class="nav-item" bindtap="goToShop">
+      <text class="nav-icon">🏪</text>
+      <text>商店</text>
+    </view>
+    <view class="nav-item active">
+      <text class="nav-icon">🎰</text>
+      <text>幸运屋</text>
+    </view>
+  </view>
+</view>

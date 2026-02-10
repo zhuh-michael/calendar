@@ -1,0 +1,131 @@
+<view class="reward-shop">
+  <!-- 顶部栏 -->
+  <view class="header">
+    <view class="user-info">
+      <image
+        src="{{userInfo.avatar ? apiBaseUrl + '/' + userInfo.avatar : '../images/default-avatar.png'}}"
+        mode="aspectFill"
+        class="user-avatar"
+      ></image>
+      <view class="user-details">
+        <text class="user-name">{{userInfo.nickname}}</text>
+        <view class="star-balance">
+          <text class="star-icon">⭐</text>
+          <text class="star-count">{{userInfo.starBalance}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 商品货架 -->
+  <view class="shop-section">
+    <text class="shop-title">🛍️ 星星商店</text>
+    <text class="shop-subtitle">用你的星星兑换心仪的奖励吧！</text>
+
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading-state">
+      <text class="loading-text">加载商品中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:elif="{{rewardList.length === 0}}" class="empty-state">
+      <text class="empty-icon">🏪</text>
+      <text class="empty-text">商店正在补货中...</text>
+    </view>
+
+    <!-- 商品列表 -->
+    <view wx:else class="product-grid">
+      <view
+        wx:for="{{rewardList}}"
+        wx:key="id"
+        class="product-card {{userInfo.starBalance >= item.cost ? 'can-afford' : 'cannot-afford'}}"
+      >
+        <view class="product-image">
+          <image
+            src="{{apiBaseUrl}}/{{item.imageUrl}}"
+            mode="aspectFill"
+            class="product-img"
+          ></image>
+          <view wx:if="{{userInfo.starBalance < item.cost}}" class="insufficient-overlay">
+            <text class="lock-icon">🔒</text>
+          </view>
+        </view>
+
+        <view class="product-info">
+          <text class="product-name">{{item.name}}</text>
+          <text class="product-description">{{item.description || '精彩的系统奖励，等你来兑换！'}}</text>
+
+          <view class="product-price">
+            <text class="star-icon">⭐</text>
+            <text class="price-text">{{item.cost}}</text>
+          </view>
+
+          <!-- 进度条（余额不足时显示） -->
+          <view wx:if="{{userInfo.starBalance < item.cost}}" class="progress-section">
+            <view class="progress-bar">
+              <view class="progress-fill" style="width: {{(userInfo.starBalance / item.cost) * 100}}%"></view>
+            </view>
+            <text class="progress-text">还差 {{item.cost - userInfo.starBalance}} 颗星星</text>
+          </view>
+        </view>
+
+        <view class="product-actions">
+          <button
+            class="purchase-btn {{userInfo.starBalance >= item.cost ? 'can-buy' : 'cannot-buy'}}"
+            data-id="{{item.id}}"
+            bindtap="purchaseReward"
+            loading="{{purchasing === item.id}}"
+          >
+            {{userInfo.starBalance >= item.cost ? '立即兑换' : '星星不足'}}
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部导航栏 -->
+  <view class="bottom-nav">
+    <view class="nav-item" bindtap="goToDashboard">
+      <text class="nav-icon">🏠</text>
+      <text>首页</text>
+    </view>
+    <view class="nav-item active">
+      <text class="nav-icon">🏪</text>
+      <text>商店</text>
+    </view>
+    <view class="nav-item" bindtap="goToLuckyHouse">
+      <text class="nav-icon">🎰</text>
+      <text>幸运屋</text>
+    </view>
+  </view>
+
+  <!-- 购买确认弹窗 -->
+  <view class="dialog-mask" wx:if="{{showConfirmDialog}}" bindtap="cancelPurchase"></view>
+  <view class="dialog-popup" wx:if="{{showConfirmDialog}}">
+    <view class="dialog-title">确认兑换</view>
+    <view class="dialog-content">
+      <view class="selected-reward">
+        <image
+          src="{{selectedReward.imageUrl || defaultProductImage}}"
+          mode="aspectFill"
+          class="reward-image"
+        ></image>
+        <view class="reward-details">
+          <text class="reward-name">{{selectedReward.name}}</text>
+          <text class="reward-cost">需要 {{selectedReward.cost}} 颗星星</text>
+        </view>
+      </view>
+      <view class="balance-info">
+        <text class="balance-text">兑换后余额：{{userInfo.starBalance - (selectedReward.cost || 0)}} 颗星星</text>
+      </view>
+      <view class="warning-text">
+        <text class="warning-icon">ℹ️</text>
+        <text class="warning-message">兑换成功后，系统会通过快递的方式发放奖励，请注意查收哦！</text>
+      </view>
+    </view>
+    <view class="dialog-footer">
+      <button class="dialog-btn cancel" bindtap="cancelPurchase">再想想</button>
+      <button class="dialog-btn confirm" bindtap="confirmPurchase" loading="{{purchasing !== null}}">确认兑换</button>
+    </view>
+  </view>
+</view>

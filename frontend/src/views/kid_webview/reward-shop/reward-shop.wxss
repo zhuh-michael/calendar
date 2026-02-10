@@ -1,0 +1,401 @@
+/* RewardShop 样式 */
+
+/* 页面容器 */
+.reward-shop {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #FFE4B5 0%, #FFA07A 50%, #FF6347 100%);
+  padding: 24rpx;
+  padding-bottom: 180rpx;
+}
+
+/* 顶部栏 */
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  padding: 24rpx 30rpx;
+  margin-bottom: 48rpx;
+  box-shadow: 0 16rpx 64rpx rgba(0, 0, 0, 0.1);
+  border: 4rpx solid #FFD700;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.user-avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  border: 6rpx solid #FFD700;
+  box-shadow: 0 8rpx 30rpx rgba(255, 215, 0, 0.3);
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 6rpx;
+  display: block;
+}
+
+.star-balance {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  color: #FF9800;
+  font-weight: bold;
+  font-size: 28rpx;
+}
+
+.star-icon {
+  font-size: 32rpx;
+}
+
+/* 商店区域 */
+.shop-section {
+  text-align: center;
+}
+
+.shop-title {
+  font-size: 56rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+  text-shadow: 4rpx 8rpx rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+.shop-subtitle {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 48rpx;
+  display: block;
+}
+
+/* 加载/空状态 */
+.loading-state, .empty-state {
+  padding: 120rpx 40rpx;
+  text-align: center;
+  color: #999;
+}
+
+.loading-text, .empty-text {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  display: block;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  display: block;
+}
+
+/* 商品网格 */
+.product-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+  margin-top: 48rpx;
+}
+
+.product-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 16rpx 50rpx rgba(0, 0, 0, 0.1);
+  border: 4rpx solid #E0E0E0;
+  transition: all 0.3s ease;
+}
+
+.product-card.can-afford {
+  border-color: #4CAF50;
+  box-shadow: 0 16rpx 50rpx rgba(76, 175, 80, 0.2);
+}
+
+.product-card.cannot-afford {
+  border-color: #ccc;
+  opacity: 0.8;
+}
+
+.product-image {
+  position: relative;
+  height: 200rpx;
+  overflow: hidden;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+}
+
+.insufficient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-icon {
+  font-size: 60rpx;
+}
+
+.product-info {
+  padding: 24rpx;
+  text-align: left;
+}
+
+.product-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.product-description {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+  line-height: 1.4;
+  display: block;
+}
+
+.product-price {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #FF9800;
+  margin-bottom: 20rpx;
+}
+
+.progress-section {
+  margin-top: 16rpx;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 16rpx;
+  background: #eee;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD700, #FF9800);
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+  display: block;
+}
+
+.product-actions {
+  padding: 0 24rpx 24rpx;
+}
+
+.purchase-btn {
+  width: 100%;
+  padding: 20rpx;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  border: none;
+}
+
+.purchase-btn.can-buy {
+  background: linear-gradient(45deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.purchase-btn.cannot-buy {
+  background: #ccc;
+  color: #999;
+}
+
+/* 底部导航栏 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 140rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 4rpx solid #FFD700;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  padding-bottom: 40rpx;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx;
+  border-radius: 20rpx;
+  min-width: 120rpx;
+}
+
+.nav-item.active {
+  background: linear-gradient(45deg, #FFD700, #FFA500);
+}
+
+.nav-item.active text {
+  color: #8B4513;
+  font-weight: bold;
+}
+
+.nav-icon {
+  font-size: 48rpx;
+  margin-bottom: 6rpx;
+}
+
+.nav-item text:last-child {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 确认弹窗 */
+.dialog-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+}
+
+.dialog-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 600rpx;
+  background: white;
+  border-radius: 20rpx;
+  z-index: 201;
+  overflow: hidden;
+}
+
+.dialog-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  text-align: center;
+  padding: 40rpx 30rpx 30rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.dialog-content {
+  padding: 24rpx;
+}
+
+.selected-reward {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.reward-image {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 12rpx;
+}
+
+.reward-details {
+  flex: 1;
+}
+
+.reward-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+  display: block;
+}
+
+.reward-cost {
+  font-size: 28rpx;
+  color: #666;
+  display: block;
+}
+
+.balance-info {
+  text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.balance-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #FF9800;
+}
+
+.warning-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx;
+  background: #FFF3CD;
+  border-radius: 8rpx;
+}
+
+.warning-icon {
+  font-size: 32rpx;
+}
+
+.warning-message {
+  flex: 1;
+  font-size: 26rpx;
+  color: #856404;
+  line-height: 1.4;
+}
+
+.dialog-footer {
+  display: flex;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+.dialog-btn {
+  flex: 1;
+  padding: 24rpx;
+  border: none;
+  font-size: 32rpx;
+  background: transparent;
+}
+
+.dialog-btn.cancel {
+  color: #999;
+  border-right: 2rpx solid #f0f0f0;
+}
+
+.dialog-btn.confirm {
+  color: #4CAF50;
+  font-weight: bold;
+}

@@ -1,5 +1,6 @@
 package com.starquest.backend.controller;
 
+import com.starquest.backend.model.Order;
 import com.starquest.backend.model.Reward;
 import com.starquest.backend.service.RewardService;
 import lombok.RequiredArgsConstructor;
@@ -123,6 +124,18 @@ public class RewardController {
     public ResponseEntity<Void> deleteReward(@PathVariable Long rewardId) {
         rewardService.deleteReward(rewardId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * 购买商品（兑换）
+     * POST /api/rewards/{rewardId}/purchase?kidId={kidId}
+     */
+    @PostMapping("/{rewardId}/purchase")
+    public ResponseEntity<Order> purchaseReward(
+            @PathVariable Long rewardId,
+            @RequestParam Long kidId) {
+        Order order = rewardService.purchaseReward(kidId, rewardId);
+        return ResponseEntity.ok(order);
     }
 
     /**

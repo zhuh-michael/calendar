@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "views/kid_webview/kid-login/kid-login",
+    "views/kid_webview/kid-dashboard/kid-dashboard",
+    "views/kid_webview/reward-shop/reward-shop",
+    "views/kid_webview/lucky-house/lucky-house"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#87CEEB",
+    "navigationBarTitleText": "小富翁",
+    "navigationBarTextStyle": "white"
+  },
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,106 @@
+<view class="login-page">
+  <!-- 童趣背景 -->
+  <view class="background-decoration">
+    <view class="star star-1">⭐</view>
+    <view class="star star-2">🌟</view>
+    <view class="star star-3">✨</view>
+    <view class="star star-4">⭐</view>
+    <view class="star star-5">🌟</view>
+    <view class="cloud cloud-1">☁️</view>
+    <view class="cloud cloud-2">☁️</view>
+    <view class="cloud cloud-3">☁️</view>
+    <view class="rainbow">🌈</view>
+    <view class="butterfly butterfly-1">🦋</view>
+    <view class="butterfly butterfly-2">🐝</view>
+    <view class="butterfly butterfly-3">🦋</view>
+  </view>
+
+  <view class="login-container">
+    <!-- 欢迎区域 -->
+    <view class="welcome-section" wx:if="{{!selectedKid}}">
+      <text class="welcome-title animate__animated animate__bounceIn">🌟 小富翁 🌟</text>
+      <text class="welcome-subtitle">选择你的超级英雄身份，开始奇妙冒险吧！🚀</text>
+      <view class="welcome-emoji">🎈🎪🎠</view>
+    </view>
+
+    <!-- 角色选择区域 -->
+    <view class="avatar-selection" wx:if="{{!selectedKid}}">
+      <text class="section-title">🎭 选择你的超级英雄！</text>
+      <view class="avatar-grid">
+        <view
+          wx:for="{{availableKids}}"
+          wx:key="id"
+          class="avatar-card animate__animated animate__zoomIn"
+          data-id="{{item.id}}"
+          bindtap="selectKid"
+        >
+          <view class="avatar-wrapper">
+            <image
+              src="{{apiBaseUrl}}/{{item.avatar}}"
+              mode="aspectFill"
+              class="avatar-image"
+            ></image>
+            <view class="avatar-glow" wx:if="{{selectedKidId === item.id}}"></view>
+            <view class="decoration-stars">
+              <text class="decoration-star star-1">⭐</text>
+              <text class="decoration-star star-2">✨</text>
+            </view>
+          </view>
+          <text class="kid-name">{{item.nickname}}</text>
+          <view class="kid-stars">
+            <text>⭐ {{item.starBalance}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已选角色显示 -->
+    <view class="password-section" wx:if="{{selectedKid && !showPasswordInput}}">
+      <view class="selected-avatar">
+        <image
+          src="{{apiBaseUrl}}/{{selectedKid.avatar}}"
+          mode="aspectFill"
+          class="selected-avatar-image"
+        ></image>
+        <text class="selected-name">{{selectedKid.nickname}}</text>
+      </view>
+      <button class="enter-button" bindtap="onShowPasswordInput">
+        点击进入冒险
+      </button>
+    </view>
+
+    <!-- 密码输入区域 -->
+    <view class="password-form" wx:if="{{showPasswordInput}}">
+      <view class="password-avatar">
+        <image
+          src="{{apiBaseUrl}}/{{selectedKid.avatar}}"
+          mode="aspectFill"
+          class="password-avatar-image"
+        ></image>
+        <text class="kid-name">{{selectedKid.nickname}}</text>
+      </view>
+
+      <view class="form-item">
+        <input
+          class="password-input"
+          type="password"
+          placeholder="请输入密码"
+          bindinput="onPasswordInput"
+          value="{{password}}"
+        />
+      </view>
+
+      <button
+        class="login-button"
+        bindtap="handleLogin"
+        loading="{{loading}}"
+      >
+        开始冒险 🚀
+      </button>
+
+      <button class="back-button" bindtap="backToSelection">
+        选择其他角色
+      </button>
+    </view>
+  </view>
+</view>

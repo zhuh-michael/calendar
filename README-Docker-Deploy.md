@@ -16,7 +16,7 @@
 - `VITE_APP_ENV`: `development`
 
 **生产环境** (`.env.production`):
-- `VITE_API_BASE`: `http://47.100.5.220:8080/api` (Docker网络)
+- `VITE_API_BASE`: `https://www.zhuchenyi.com:8080/api` (Docker网络)
 - `VITE_APP_ENV`: `production`
 
 ### 后端环境变量

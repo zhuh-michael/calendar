@@ -13,7 +13,7 @@ DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose build
 
 # Tag the images
 REGISTRY="crpi-ymugfdq7imhhoek8.cn-shanghai.personal.cr.aliyuncs.com/myspace_zhuh"
-VERSION="v1.4-prod"
+VERSION="v1.5-prod"
 
 BACKEND_IMAGE="${REGISTRY}/starquest-backend:${VERSION}"
 # FRONTEND_IMAGE="${REGISTRY}/starquest-frontend:${VERSION}"
